@@ -1,19 +1,15 @@
-﻿using System;
+﻿using EnglishWordsExam;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using static EnglishWordsExam.Constants;
 
 namespace WordExam
 {
     class Program
     {
-        private const string FilePath = @"../../../words.txt";
-        private const string HintCommand = "hint";
-        private const string HintCommandCyrilic = "хинт";
-        private const int SymbolsToReveal = 2;
-        private const char HintMaskSymbol = '*';
-
         static void Main()
         {
             HashSet<DictionaryWord> words = LoadWordsFromFile(FilePath);
@@ -80,8 +76,8 @@ namespace WordExam
 
         private static HashSet<DictionaryWord> LoadWordsFromFile(string filePath)
         {
-            StreamReader reader = new StreamReader(filePath);
-            HashSet<DictionaryWord> words = new HashSet<DictionaryWord>();
+            StreamReader reader = new(filePath);
+            HashSet<DictionaryWord> words = new();
 
             string line;
             while (!string.IsNullOrWhiteSpace(line = reader.ReadLine()))
@@ -110,7 +106,7 @@ namespace WordExam
 
             Random randomGenerator = new();
             DictionaryWord[] examWords = new DictionaryWord[wordsToTranslate];
-            HashSet<int> usedRandomCrearedIndexes = new HashSet<int>(); 
+            HashSet<int> usedRandomCrearedIndexes = new HashSet<int>();
             for (int i = 0; i < wordsToTranslate; i++)
             {
                 int randomIndex = randomGenerator.Next(0, words.Length);
@@ -226,29 +222,5 @@ namespace WordExam
             Console.WriteLine();
             Console.WriteLine($"Translated correctly {correct}/{wordsCount}.");
         }
-    }
-
-    class DictionaryWord : IEquatable<DictionaryWord>
-    {
-        public DictionaryWord(string word, string[] translations)
-        {
-            this.Word = word;
-            this.Translations = translations;
-        }
-
-        public string Word { get; }
-
-        public string[] Translations { get; }
-
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(this.Word, this.Translations[0]);
-        }
-
-        public bool Equals(DictionaryWord other)
-        {
-            return other != null
-                && other.Word == this.Word;
-        }
-    }
+    }  
 }
