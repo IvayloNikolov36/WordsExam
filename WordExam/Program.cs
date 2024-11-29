@@ -108,12 +108,18 @@ namespace WordExam
         {
             int correctlyTranslated = 0;
 
-            Random random = new Random();
-
+            Random randomGenerator = new();
             DictionaryWord[] examWords = new DictionaryWord[wordsToTranslate];
+            HashSet<int> usedRandomCrearedIndexes = new HashSet<int>(); 
             for (int i = 0; i < wordsToTranslate; i++)
             {
-                int randomIndex = random.Next(0, words.Length);
+                int randomIndex = randomGenerator.Next(0, words.Length);
+                while (usedRandomCrearedIndexes.Contains(randomIndex))
+                {
+                    randomIndex = randomGenerator.Next(0, words.Length);
+                }
+
+                usedRandomCrearedIndexes.Add(randomIndex);
                 examWords[i] = words[randomIndex];
             }
 
