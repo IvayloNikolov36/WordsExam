@@ -9,11 +9,11 @@ namespace WordExam
     {
         static void Main()
         {
-            IList<DictionaryWord> words = WordsFileLoader.Load();
+            (IEnumerable<DictionaryWord> words, int count) = WordsFileLoader.Load();
 
-            PrintTotalWords(words.Count);
+            PrintTotalWords(count);
 
-            int wordsToTranslate = ConsoleInputParser.GetWordsToTranslate(words.Count);
+            int wordsToTranslate = ConsoleInputParser.GetWordsToTranslate(count);
 
             TranslationType selectedTranslation = ConsoleInputParser.GetTranslationType();
 

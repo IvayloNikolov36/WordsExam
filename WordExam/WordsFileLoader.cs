@@ -7,7 +7,7 @@ namespace EnglishWordsExam
 {
     public class WordsFileLoader
     {
-        public static IList<DictionaryWord> Load()
+        public static (IEnumerable<DictionaryWord>, int wordsCount) Load()
         {
             StreamReader reader = new(Constants.FilePath);
             HashSet<DictionaryWord> words = new();
@@ -30,7 +30,7 @@ namespace EnglishWordsExam
                 words.Add(new DictionaryWord(enWord, translations));
             }
 
-            return words.ToList();
+            return (words, words.Count);
         }
     }
 }
