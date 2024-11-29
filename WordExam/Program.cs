@@ -146,18 +146,19 @@ namespace WordExam
                 if (!translationsData.Contains(inputTranslation))
                 {
                     hintAndWrongTranslatedWordsIndexes.Add(wordIndex);
-                    Console.WriteLine($"Wrong! Correct translation: {string.Join(", ", translationsData)}");
+                    ConsoleWrite.ErrorLine("Wrong!");
+                    Console.WriteLine($"Correct translation: {string.Join(", ", translationsData)}");
                 }
                 else
                 {
-                    Console.Write("Right! ");
+                    ConsoleWrite.SuccessLine("Right!");
                     correctlyTranslated++;
 
                     if (translateEnToBg)
                     {
-                        Console.WriteLine("All translations: ");
-                        Console.Write($"{Environment.NewLine}---");
-                        Console.WriteLine(string.Join($"{Environment.NewLine}---", translationsData));
+                        ConsoleWrite.InfoLine("All translations: ");
+                        ConsoleWrite.Info($"{Environment.NewLine}---");
+                        ConsoleWrite.InfoLine(string.Join($"{Environment.NewLine}---", translationsData));
                     }
                 }
             }
