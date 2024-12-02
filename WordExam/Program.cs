@@ -1,5 +1,6 @@
 ﻿using EnglishWordsExam;
 using EnglishWordsExam.Enums;
+using EnglishWordsExam.Strategies;
 using System;
 using System.Collections.Generic;
 
@@ -13,12 +14,29 @@ namespace WordExam
 
             PrintTotalWords(count);
 
-            int wordsToTranslate = ConsoleInputParser.GetWordsToTranslate(count);
+            bool newTurn = true;
+            while (newTurn)
+            {
+                int wordsToTranslate = ConsoleInputParser.GetWordsToTranslate(count);
 
-            TranslationType selectedTranslation = ConsoleInputParser.GetTranslationType();
+                TranslationType selectedTranslation = ConsoleInputParser.GetTranslationType();
 
-            ExamProcessor exam = new ExamProcessor(words, wordsToTranslate, selectedTranslation);
-            exam.Start();
+                ExamProcessor exam = new ExamProcessor(
+                    words,
+                    wordsToTranslate,
+                    selectedTranslation,
+                    new HintedAndWrongWordsSupplementaryExamStrategy());
+
+                exam.Start();
+
+                ConsoleWrite.AnnouncementLine("If you don't want to take another exam, input exit. (Every other input will start a new exam)");
+
+                string choice = Console.ReadLine().Trim().ToLower();
+                if (choice == Constants.ExitCommand)
+                {
+                    Environment.Exit(0);
+                }
+            }
         }
 
         private static void PrintTotalWords(int count)

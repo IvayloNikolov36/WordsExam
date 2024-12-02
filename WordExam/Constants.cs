@@ -7,5 +7,6 @@
         public const string HintCommandCyrilic = "хинт";
         public const int SymbolsToReveal = 2;
         public const char HintMaskSymbol = '*';
+        public const string ExitCommand = "exit";
     }
 }

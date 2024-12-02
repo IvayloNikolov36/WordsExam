@@ -14,6 +14,12 @@ namespace EnglishWordsExam
             ColorLine(text, ConsoleColor.Blue, ConsoleColor.White);
         }
 
+        public static void AnnouncementLine(string text)
+        {
+            Console.WriteLine();
+            ColorLine(text, ConsoleColor.Yellow);
+        }
+
         public static void Info(string text)
         {
             ColorLine(text, ConsoleColor.Blue, ConsoleColor.White, isLine: false);
