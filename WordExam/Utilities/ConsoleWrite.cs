@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace EnglishWordsExam
+namespace EnglishWordsExam.Utilities
 {
     public class ConsoleWrite
     {

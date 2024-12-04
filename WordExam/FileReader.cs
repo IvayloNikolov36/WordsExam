@@ -1,13 +1,15 @@
-﻿using System;
+﻿using EnglishWordsExam.Models;
+using EnglishWordsExam.Utilities;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
 namespace EnglishWordsExam
 {
-    public class WordsFileLoader
+    public class FileReader : IReader
     {
-        public static (IEnumerable<DictionaryWord>, int wordsCount) Load()
+        public LoadWordsResult LoadWords()
         {
             StreamReader reader = new(Constants.FilePath);
             HashSet<DictionaryWord> words = new();
@@ -30,7 +32,7 @@ namespace EnglishWordsExam
                 words.Add(new DictionaryWord(enWord, translations));
             }
 
-            return (words, words.Count);
+            return new LoadWordsResult { Words = words, WordsCount = words.Count };
         }
     }
 }

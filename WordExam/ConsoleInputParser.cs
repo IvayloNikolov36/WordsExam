@@ -7,7 +7,7 @@ namespace EnglishWordsExam
 {
     public class ConsoleInputParser
     {
-        public static int GetWordsToTranslate(int totalWordsCount)
+        public static int GetWordsCountForTranslation(int totalWordsCount)
         {
             uint wordsToTranslate = 0;
 
@@ -26,13 +26,13 @@ namespace EnglishWordsExam
 
                 if (wordsToTranslate > totalWordsCount)
                 {
-                    Console.WriteLine($"Words count should be less than or equal to the words in the dictionary ({totalWordsCount}).");
+                    Console.WriteLine($"Selected words count for translation should be less than or equal to the words amount in the dictionary ({totalWordsCount}).");
                     continue;
                 }
 
                 if (wordsToTranslate == 0)
                 {
-                    Console.WriteLine($"Words count should be more than 0.");
+                    Console.WriteLine($"Words count should be more than 0!");
                     continue;
                 }
 
@@ -52,8 +52,8 @@ namespace EnglishWordsExam
             string inputTranslationType;
             while(true)
             {
-                Console.WriteLine("Input 1 for English-Bulgarian translate,");
-                Console.Write("Input 2 for Bulgarian-English translate:");
+                Console.WriteLine("---Input 1 for English-Bulgarian translate");
+                Console.WriteLine("---Input 2 for Bulgarian-English translate");
 
                 inputTranslationType = Console.ReadLine().Trim();
                 if (!translationTypes.Any(tt => tt == inputTranslationType))

@@ -1,9 +1,9 @@
 ﻿using EnglishWordsExam.Enums;
+using EnglishWordsExam.Models;
 using EnglishWordsExam.Strategies;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace EnglishWordsExam
 {

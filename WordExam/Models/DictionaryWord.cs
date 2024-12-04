@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace EnglishWordsExam
+namespace EnglishWordsExam.Models
 {
     public class DictionaryWord : IEquatable<DictionaryWord>
     {
