@@ -5,9 +5,9 @@ using System.Linq;
 
 namespace EnglishWordsExam.Strategies
 {
-    public class HintedAndWrongWordsSupplementaryExamStrategy : ExamBaseStrategy
+    public class SpaciousSupplementaryExamStrategy : ExamBaseStrategy
     {
-        private const int DefaultSupplementaryExamRounds = 1;
+        private const int DefaultSupplementaryExamRounds = 2;
 
         protected override int SupplementaryExamRounds => DefaultSupplementaryExamRounds;
 

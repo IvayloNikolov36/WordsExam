@@ -32,7 +32,7 @@ namespace EnglishWordsExam
                     wordsResult.Words,
                     wordsToTranslate,
                     selectedTranslation,
-                    new HintedAndWrongWordsSupplementaryExamStrategy());
+                    new SpaciousSupplementaryExamStrategy());
 
                 exam.Start();
 

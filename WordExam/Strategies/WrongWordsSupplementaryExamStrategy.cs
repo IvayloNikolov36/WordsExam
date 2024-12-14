@@ -6,6 +6,10 @@ namespace EnglishWordsExam.Strategies
 {
     public class WrongWordsSupplementaryExamStrategy : ExamBaseStrategy
     {
+        private const int DefaultSupplementaryExamRounds = 1;
+
+        protected override int SupplementaryExamRounds => DefaultSupplementaryExamRounds;
+
         public override void ProcessExam(IEnumerable<DictionaryWord> examWords, TranslationType translationType)
         {
             (_, HashSet<int> wrongTranslatedWords) = this.Process(examWords, translationType);

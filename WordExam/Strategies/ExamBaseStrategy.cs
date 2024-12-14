@@ -10,12 +10,16 @@ namespace EnglishWordsExam.Strategies
 {
     public abstract class ExamBaseStrategy : IExamStrategy
     {
+        private const int DefaultSupplementaryExamRounds = 0;
+
         protected ExamBaseStrategy()
         {
             this.WordsForSupplementaryExam = new List<DictionaryWord>();
         }
 
         protected List<DictionaryWord> WordsForSupplementaryExam { get; }
+
+        protected virtual int SupplementaryExamRounds { get; } = DefaultSupplementaryExamRounds;
 
         public abstract void ProcessExam(IEnumerable<DictionaryWord> examWords, TranslationType translationType);
 
@@ -88,23 +92,52 @@ namespace EnglishWordsExam.Strategies
             HashSet<int> resultWordsIndexes,
             TranslationType translationType)
         {
-            int index = 0;
-            foreach (DictionaryWord item in examWords)
+            this.WordsForSupplementaryExam.AddRange(this.GetWordsPortion(examWords, resultWordsIndexes));
+
+            if (this.WordsForSupplementaryExam.Count == 0)
             {
-                if (resultWordsIndexes.Contains(index++))
-                {
-                    this.WordsForSupplementaryExam.Add(item);
-                }
+                return;
             }
 
-            if (this.WordsForSupplementaryExam.Count > 0)
+            if (this.SupplementaryExamRounds == 1)
             {
-                ConsoleWrite.AnnouncementLine($"Supplementary exam for {this.WordsForSupplementaryExam.Count} words.");
+                ConsoleWrite.AnnouncementLine(
+                    $"Supplementary exam ({this.WordsForSupplementaryExam.Count} word(s)).");
 
-                DictionaryWord[] wordsExam = this.WordsForSupplementaryExam.ToArray();
+                DictionaryWord[] wordsForSupplementaryExam = this.WordsForSupplementaryExam.ToArray();
                 this.WordsForSupplementaryExam.Clear();
 
-                this.ProcessExam(wordsExam, translationType);
+                this.ProcessExam(wordsForSupplementaryExam, translationType);
+            }
+
+            if (this.SupplementaryExamRounds > 1)
+            {
+                HashSet<int> hintedAndWrong = new HashSet<int>();
+
+                for (int round = 0; round < this.SupplementaryExamRounds; round++)
+                {
+                    if (this.WordsForSupplementaryExam.Count == 0)
+                    {
+                        return;
+                    }
+
+                    ConsoleWrite.AnnouncementLine(
+                        $"Supplementary exam round {round + 1} ({this.WordsForSupplementaryExam.Count} word(s)).");
+
+                    (HashSet<int> hinted, HashSet<int> wrong) = this.Process(
+                        this.WordsForSupplementaryExam.ToArray(),
+                        translationType);
+
+                    hintedAndWrong.UnionWith(hinted.Union(wrong));
+                }
+
+                if (hintedAndWrong.Count == 0)
+                {
+                    return;
+                }
+
+                this.WordsForSupplementaryExam.Clear();
+                this.ProcessSupplementaryExam(examWords, hintedAndWrong, translationType);
             }
         }
 
@@ -144,6 +177,22 @@ namespace EnglishWordsExam.Strategies
             }
 
             Console.WriteLine(hints.ToString());
+        }
+
+        private List<DictionaryWord> GetWordsPortion(IEnumerable<DictionaryWord> examWords, HashSet<int> wordsIndexes)
+        {
+            int index = 0;
+            List<DictionaryWord> result = new List<DictionaryWord>(wordsIndexes.Count);
+
+            foreach (DictionaryWord item in examWords)
+            {
+                if (wordsIndexes.Contains(index++))
+                {
+                    result.Add(item);
+                }
+            }
+
+            return result;
         }
 
         private void PrintResult(int correct, int wordsCount)
