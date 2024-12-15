@@ -1,5 +1,4 @@
 ﻿using EnglishWordsExam.Models;
-using EnglishWordsExam.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -31,6 +30,8 @@ namespace EnglishWordsExam
 
                 words.Add(new DictionaryWord(enWord, translations));
             }
+
+            reader.Dispose();
 
             return new LoadWordsResult { Words = words, WordsCount = words.Count };
         }
