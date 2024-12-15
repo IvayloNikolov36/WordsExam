@@ -39,16 +39,13 @@ namespace EnglishWordsExam.Utilities
             Console.BackgroundColor = consoleColor;
             Console.ForegroundColor = foreGroundColor;
 
+            Console.Write(text);
+            Console.ResetColor();
+
             if (isLine)
             {
-                Console.WriteLine(text);
+                Console.WriteLine();
             }
-            else
-            {
-                Console.Write(text);
-            }
-            
-            Console.ResetColor();
         }
     }
 }
