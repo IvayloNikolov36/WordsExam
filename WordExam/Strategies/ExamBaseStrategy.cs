@@ -92,7 +92,9 @@ namespace EnglishWordsExam.Strategies
             HashSet<int> resultWordsIndexes,
             TranslationType translationType)
         {
-            this.WordsForSupplementaryExam.AddRange(this.GetWordsPortion(examWords, resultWordsIndexes));
+            List<DictionaryWord> wordsPortion = this.GetWordsPortion(examWords, resultWordsIndexes);
+
+            this.WordsForSupplementaryExam.AddRange(wordsPortion);
 
             if (this.WordsForSupplementaryExam.Count == 0)
             {
@@ -104,15 +106,14 @@ namespace EnglishWordsExam.Strategies
                 ConsoleWrite.AnnouncementLine(
                     $"Supplementary exam ({this.WordsForSupplementaryExam.Count} word(s)).");
 
-                DictionaryWord[] wordsForSupplementaryExam = this.WordsForSupplementaryExam.ToArray();
                 this.WordsForSupplementaryExam.Clear();
 
-                this.ProcessExam(wordsForSupplementaryExam, translationType);
+                this.ProcessExam(wordsPortion, translationType);
             }
 
             if (this.SupplementaryExamRounds > 1)
             {
-                HashSet<int> hintedAndWrong = new HashSet<int>();
+                HashSet<int> hintedAndWrongWordIndexes = new();
 
                 for (int round = 0; round < this.SupplementaryExamRounds; round++)
                 {
@@ -128,16 +129,16 @@ namespace EnglishWordsExam.Strategies
                         this.WordsForSupplementaryExam.ToArray(),
                         translationType);
 
-                    hintedAndWrong.UnionWith(hinted.Union(wrong));
+                    hintedAndWrongWordIndexes.UnionWith(hinted.Union(wrong));
                 }
 
-                if (hintedAndWrong.Count == 0)
+                if (hintedAndWrongWordIndexes.Count == 0)
                 {
                     return;
                 }
 
                 this.WordsForSupplementaryExam.Clear();
-                this.ProcessSupplementaryExam(examWords, hintedAndWrong, translationType);
+                this.ProcessSupplementaryExam(wordsPortion, hintedAndWrongWordIndexes, translationType);
             }
         }
 
