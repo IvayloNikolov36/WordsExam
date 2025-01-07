@@ -16,24 +16,29 @@ namespace EnglishWordsExam
             string line;
             while (!string.IsNullOrWhiteSpace(line = reader.ReadLine()))
             {
-                string[] lineTokens = line
-                    .Split(new[] { '-' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(word => word.Trim())
-                    .ToArray();
-
-                string enWord = lineTokens[0];
-
-                string[] translations = lineTokens[1]
-                    .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(w => w.Trim())
-                    .ToArray();
-
-                words.Add(new DictionaryWord(enWord, translations));
+                words.Add(ParseLineInfo(line));
             }
 
             reader.Dispose();
 
             return new LoadWordsResult { Words = words, WordsCount = words.Count };
+        }
+
+        private static DictionaryWord ParseLineInfo(string line)
+        {
+            string[] lineTokens = line
+                .Split(new[] { Constants.DelimiterWordTranslation }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(word => word.Trim())
+                .ToArray();
+
+            string enWord = lineTokens[0];
+
+            string[] translations = lineTokens[1]
+                .Split(new[] { Constants.TranslationsDelimiter }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(w => w.Trim())
+                .ToArray();
+
+            return new DictionaryWord(enWord, translations);
         }
     }
 }
