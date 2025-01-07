@@ -1,16 +1,22 @@
 ﻿using EnglishWordsExam.Models;
-using System;
+using EnglishWordsExam.Parsers;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
 namespace EnglishWordsExam
 {
     public class FileReader : IReader
     {
+        private readonly string filePath;
+
+        public FileReader(string filePath)
+        {
+            this.filePath = filePath;
+        }
+
         public LoadWordsResult LoadWords()
         {
-            StreamReader reader = new(Constants.FilePath);
+            StreamReader reader = new(this.filePath);
             HashSet<DictionaryWord> words = new();
 
             string line;
@@ -21,22 +27,26 @@ namespace EnglishWordsExam
 
             reader.Dispose();
 
-            return new LoadWordsResult { Words = words, WordsCount = words.Count };
+            return new LoadWordsResult
+            { 
+                Words = words, 
+                WordsCount = words.Count 
+            };
+        }
+
+        public string[] GetWordLines()
+        {
+            string[] lines = File.ReadAllLines(this.filePath);
+
+            return lines;
         }
 
         private static DictionaryWord ParseLineInfo(string line)
         {
-            string[] lineTokens = line
-                .Split(new[] { Constants.DelimiterWordTranslation }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(word => word.Trim())
-                .ToArray();
+            string[] lineTokens = FileDataParser.GetLineTokens(line);
 
             string enWord = lineTokens[0];
-
-            string[] translations = lineTokens[1]
-                .Split(new[] { Constants.TranslationsDelimiter }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(w => w.Trim())
-                .ToArray();
+            string[] translations = FileDataParser.GetWordTranslationTokens(lineTokens);
 
             return new DictionaryWord(enWord, translations);
         }

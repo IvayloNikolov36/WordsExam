@@ -6,7 +6,7 @@ namespace WordExam
     {
         static void Main()
         {
-            AppEngine engine = new AppEngine(new FileReader());
+            AppEngine engine = new AppEngine(new FileReader(Constants.FilePath));
             engine.Run();
         }
     }
