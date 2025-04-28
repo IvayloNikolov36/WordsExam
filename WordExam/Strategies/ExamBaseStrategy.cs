@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace EnglishWordsExam.Strategies
 {
@@ -52,33 +53,36 @@ namespace EnglishWordsExam.Strategies
                 Console.Write($"{wordIndex + 1}. Translate: '{textToTranslate}': ");
                 string inputTranslation = Console.ReadLine();
 
-                if (IsHintCommand(inputTranslation))
+                bool needsHint = this.IsHintCommand(inputTranslation);
+
+                if (needsHint)
                 {
-                    PrintHints(translationsData, Constants.SymbolsToReveal);
+                    this.PrintHints(translationsData, Constants.SymbolsToReveal);
                     hintedWordsIndexes.Add(wordIndex);
                     Console.Write("Your Translation: ");
                     inputTranslation = Console.ReadLine();
                 }
 
-                if (!translationsData.Contains(inputTranslation))
+                bool isTranslationRight = this.IsGivenTranslationRight(
+                    inputTranslation,
+                    translationsData,
+                    translationType);
+
+                if (!isTranslationRight)
                 {
                     wrongTranslatedWordsIndexes.Add(wordIndex);
-                    ConsoleWrite.ErrorLine("Wrong!");
-                    ConsoleWrite.InfoLine("Correct translation:");
-                    ConsoleWrite.Info($"{Environment.NewLine}---");
-                    ConsoleWrite.InfoLine($"{string.Join($"{Environment.NewLine}---", translationsData)}");
+                    this.PrintCorrectTranslationInfo(translationsData);
+                    continue;
                 }
-                else
-                {
-                    ConsoleWrite.SuccessLine("Right!");
-                    correctlyTranslated++;
 
-                    if (translationType == TranslationType.EnglishToBulgarian)
-                    {
-                        ConsoleWrite.InfoLine("All translations: ");
-                        ConsoleWrite.Info($"{Environment.NewLine}---");
-                        ConsoleWrite.InfoLine(string.Join($"{Environment.NewLine}---", translationsData));
-                    }
+                correctlyTranslated++;
+                ConsoleWrite.SuccessLine("Right!");
+
+                if (translationType == TranslationType.EnglishToBulgarian)
+                {
+                    ConsoleWrite.InfoLine("All translations: ");
+                    ConsoleWrite.Info($"{Environment.NewLine}---");
+                    ConsoleWrite.InfoLine(string.Join($"{Environment.NewLine}---", translationsData));
                 }
             }
 
@@ -180,6 +184,18 @@ namespace EnglishWordsExam.Strategies
             Console.WriteLine(hints.ToString());
         }
 
+        private bool IsGivenTranslationRight(string givenTranslation, string[] translationsData, TranslationType translationType)
+        {
+            if (translationType == TranslationType.EnglishToBulgarian)
+            {
+                List<string> allTranslations = this.GetAllTranslations(translationsData);
+
+                return allTranslations.Contains(givenTranslation);
+            }
+
+            return translationsData[0] == givenTranslation;
+        }
+
         private List<DictionaryWord> GetWordsPortion(IEnumerable<DictionaryWord> examWords, HashSet<int> wordsIndexes)
         {
             int index = 0;
@@ -196,10 +212,53 @@ namespace EnglishWordsExam.Strategies
             return result;
         }
 
+        private void PrintCorrectTranslationInfo(string[] translationsData)
+        {
+            ConsoleWrite.ErrorLine("Wrong!");
+            ConsoleWrite.InfoLine("Correct translation:");
+
+            ConsoleWrite.Info($"{Environment.NewLine}---");
+            ConsoleWrite.InfoLine($"{string.Join($"{Environment.NewLine}---", translationsData)}");
+        }
+
         private void PrintResult(int correct, int wordsCount)
         {
             Console.WriteLine();
             ConsoleWrite.InfoLine($"Translated correctly {correct}/{wordsCount}.");
+        }
+
+        private List<string> GetAllTranslations(string[] translations)
+        {
+            char symbolToCheck = '(';
+
+            string[] filteredTranslations = translations
+                .Where(x => !x.Contains(symbolToCheck))
+                .ToArray();
+
+            List<string> translationsToBeProcessed = translations
+                .Where(x => x.Contains(symbolToCheck))
+                .ToList();
+
+            int listCapacity = filteredTranslations.Length + translationsToBeProcessed.Count * 2;
+
+            List<string> allTranslations = new(listCapacity);
+            allTranslations.AddRange(filteredTranslations);
+
+            Regex rgx = new(@"(?<first>\w+)\s+\((?<second>\w+)\)");
+
+            translationsToBeProcessed
+                .ForEach(x =>
+                {
+                    Match match = rgx.Match(x);
+
+                    string first = match.Groups["first"].Value;
+                    string second = match.Groups["second"].Value;
+
+                    allTranslations.Add($"{first} {second}");
+                    allTranslations.Add(first);
+                });
+
+            return allTranslations;
         }
     }
 }
