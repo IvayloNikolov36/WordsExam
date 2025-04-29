@@ -212,6 +212,53 @@ namespace EnglishWordsExam.Strategies
             return result;
         }
 
+        private List<string> GetAllTranslationsForVisaVersaType(List<string> translations)
+        {
+            Regex rgx = new(@"(?<base>[\w\s]+)\s(?<first>\w+)(\/(?<add>\w+))+");
+
+            List<string> resultTranslations = new();
+
+            translations.ForEach((string translation) =>
+            {
+                Match match = rgx.Match(translation);
+
+                string basePart = match.Groups["base"].Value;
+                string firstAddition = match.Groups["first"].Value;
+
+                resultTranslations.Add($"{basePart} {firstAddition}");
+
+                CaptureCollection additions = match.Groups["add"].Captures;
+                for (int i = 0; i < additions.Count; i++)
+                {
+                    string addition = additions[i].Value;
+                    resultTranslations.Add($"{basePart} {addition}");
+                }
+            });
+
+            return resultTranslations;
+        }
+
+        private List<string> GetAllTranslationsForWordWithAddition(List<string> translations)
+        {
+            Regex rgx = new(@"(?<first>\w+)\s+\((?<second>\w+)\)");
+
+            List<string> resultTranslations = new List<string>(translations.Count * 2);
+
+            translations
+                .ForEach((string x) =>
+                {
+                    Match match = rgx.Match(x);
+
+                    string first = match.Groups["first"].Value;
+                    string second = match.Groups["second"].Value;
+
+                    resultTranslations.Add($"{first} {second}");
+                    resultTranslations.Add(first);
+                });
+
+            return resultTranslations;
+        }
+
         private void PrintCorrectTranslationInfo(string[] translationsData)
         {
             ConsoleWrite.ErrorLine("Wrong!");
@@ -230,35 +277,28 @@ namespace EnglishWordsExam.Strategies
         private List<string> GetAllTranslations(string[] translations)
         {
             char symbolToCheck = '(';
+            char symbolVisaVersa = '/';
 
-            string[] filteredTranslations = translations
-                .Where(x => !x.Contains(symbolToCheck))
-                .ToArray();
+            IEnumerable<string> noProcessTranslations = translations
+                .Where(x => !x.Contains(symbolToCheck) && !x.Contains(symbolVisaVersa));
 
-            List<string> translationsToBeProcessed = translations
-                .Where(x => x.Contains(symbolToCheck))
-                .ToList();
+            List<string> result = [.. noProcessTranslations];
 
-            int listCapacity = filteredTranslations.Length + translationsToBeProcessed.Count * 2;
+            List<string> filteredTranslations = [.. translations.Where(x => x.Contains(symbolToCheck))];
+            if (filteredTranslations.Count > 0)
+            {
+                List<string> translationsToAdd = this.GetAllTranslationsForWordWithAddition(filteredTranslations);
+                result.AddRange(translationsToAdd);
+            }
 
-            List<string> allTranslations = new(listCapacity);
-            allTranslations.AddRange(filteredTranslations);
-
-            Regex rgx = new(@"(?<first>\w+)\s+\((?<second>\w+)\)");
-
-            translationsToBeProcessed
-                .ForEach(x =>
-                {
-                    Match match = rgx.Match(x);
-
-                    string first = match.Groups["first"].Value;
-                    string second = match.Groups["second"].Value;
-
-                    allTranslations.Add($"{first} {second}");
-                    allTranslations.Add(first);
-                });
-
-            return allTranslations;
+            filteredTranslations = [.. translations.Where(x => x.Contains(symbolVisaVersa))];
+            if (filteredTranslations.Count > 0)
+            {
+                List<string> translationsViseVersa = this.GetAllTranslationsForVisaVersaType(filteredTranslations);
+                result.AddRange(translationsViseVersa);
+            }
+            
+            return result;
         }
     }
 }
