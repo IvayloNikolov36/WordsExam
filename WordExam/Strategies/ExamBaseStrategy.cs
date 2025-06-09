@@ -47,7 +47,7 @@ namespace EnglishWordsExam.Strategies
 
                 string[] translationsData = translationType == TranslationType.EnglishToBulgarian
                     ? translations
-                    : new[] { englishWord };
+                    : [englishWord];
 
                 Console.WriteLine();
                 Console.Write($"{wordIndex + 1}. Translate: '{textToTranslate}': ");
@@ -238,22 +238,31 @@ namespace EnglishWordsExam.Strategies
             return resultTranslations;
         }
 
-        private List<string> GetAllTranslationsForWordWithAddition(List<string> translations)
+        private List<string> GetAllTranslationsForWordWithAdditionInParenthesis(List<string> translations)
         {
-            Regex rgx = new(@"(?<first>\w+)\s+\((?<second>\w+)\)");
+            //case1: лея (се) => ["лея", "лея се"]
+            Regex rgx = new(@"(?<first>(\w+\s+)+)\((?<second>\w+)\)");
 
-            List<string> resultTranslations = new List<string>(translations.Count * 2);
+            List<string> resultTranslations = new(translations.Count * 2);
 
             translations
-                .ForEach((string x) =>
+                .ForEach((string translation) =>
                 {
-                    Match match = rgx.Match(x);
+                    Match match = rgx.Match(translation);
 
-                    string first = match.Groups["first"].Value;
-                    string second = match.Groups["second"].Value;
+                    bool isReversedCase = !match.Success;
+                    if (isReversedCase)
+                    {
+                        //case2: (широко) разпространен => ["широко разпространен", "разпространен"]
+                        Regex reversedCaseRegex = new(@"\((?<first>\w+)\)\s+(?<second>[\w\s]+)");
+                        match = reversedCaseRegex.Match(translation);                   
+                    }
+
+                    string first = match.Groups["first"].Value.Trim();
+                    string second = match.Groups["second"].Value.Trim();
 
                     resultTranslations.Add($"{first} {second}");
-                    resultTranslations.Add(first);
+                    resultTranslations.Add(isReversedCase ? second : first);
                 });
 
             return resultTranslations;
@@ -287,7 +296,7 @@ namespace EnglishWordsExam.Strategies
             List<string> filteredTranslations = [.. translations.Where(x => x.Contains(symbolToCheck))];
             if (filteredTranslations.Count > 0)
             {
-                List<string> translationsToAdd = this.GetAllTranslationsForWordWithAddition(filteredTranslations);
+                List<string> translationsToAdd = this.GetAllTranslationsForWordWithAdditionInParenthesis(filteredTranslations);
                 result.AddRange(translationsToAdd);
             }
 
@@ -297,7 +306,7 @@ namespace EnglishWordsExam.Strategies
                 List<string> translationsViseVersa = this.GetAllTranslationsForVisaVersaType(filteredTranslations);
                 result.AddRange(translationsViseVersa);
             }
-            
+
             return result;
         }
     }
