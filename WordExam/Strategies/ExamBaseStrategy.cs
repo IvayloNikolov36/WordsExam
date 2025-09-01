@@ -212,9 +212,9 @@ namespace EnglishWordsExam.Strategies
             return result;
         }
 
-        private List<string> GetAllTranslationsForVisaVersaType(List<string> translations)
+        private static List<string> GetAllTranslationsForVisaVersaType(List<string> translations)
         {
-            Regex rgx = new(@"(?<base>[\w\s]+)\s(?<first>\w+)(\/(?<add>\w+))+");
+            Regex rgx = new(@"(?<before>[\w\s]*?)((?<left>\w+)(\/(?<right>\w+))+)(?<after>[\w\s]*)");
 
             List<string> resultTranslations = new();
 
@@ -222,16 +222,23 @@ namespace EnglishWordsExam.Strategies
             {
                 Match match = rgx.Match(translation);
 
-                string basePart = match.Groups["base"].Value;
-                string firstAddition = match.Groups["first"].Value;
+                string beforePart = match.Groups["before"].Value.Trim();
 
-                resultTranslations.Add($"{basePart} {firstAddition}");
+                string left = match.Groups["left"].Value.Trim();
+                string right = match.Groups["right"].Value.Trim();
 
-                CaptureCollection additions = match.Groups["add"].Captures;
-                for (int i = 0; i < additions.Count; i++)
+                string afterPart = match.Groups["after"].Value.Trim();
+
+                if (beforePart.Trim().Length == 0)
                 {
-                    string addition = additions[i].Value;
-                    resultTranslations.Add($"{basePart} {addition}");
+                    resultTranslations.Add($"{left} {afterPart}");
+                    resultTranslations.Add($"{right} {afterPart}");
+                }
+
+                if (afterPart.Trim().Length == 0)
+                {
+                    resultTranslations.Add($"{beforePart} {left}");
+                    resultTranslations.Add($"{beforePart} {right}");
                 }
             });
 
@@ -241,7 +248,11 @@ namespace EnglishWordsExam.Strategies
         private List<string> GetAllTranslationsForWordWithAdditionInParenthesis(List<string> translations)
         {
             //case1: лея (се) => ["лея", "лея се"]
-            Regex rgx = new(@"(?<first>(\w+\s+)+)\((?<second>\w+)\)");
+            //case2: (из)обилен => ["изобилен", "обилен"]
+            //case3: прекалено (из)обилен => ["прекалено изобилен", "прекалено обилен"]
+            //case4: извинявам (се) предварително => ["извинявам предварително", "извинявам се предварително"]
+            
+            Regex rgx = new(@"(?<before>[\w\s]*)\s*\((?<incompassed>\w+)\)\s*(?<after>[\w\s]*)");
 
             List<string> resultTranslations = new(translations.Count * 2);
 
@@ -250,22 +261,40 @@ namespace EnglishWordsExam.Strategies
                 {
                     Match match = rgx.Match(translation);
 
-                    bool isReversedCase = !match.Success;
-                    if (isReversedCase)
-                    {
-                        //case2: (широко) разпространен => ["широко разпространен", "разпространен"]
-                        Regex reversedCaseRegex = new(@"\((?<first>\w+)\)\s+(?<second>[\w\s]+)");
-                        match = reversedCaseRegex.Match(translation);                   
-                    }
+                    string before = match.Groups["before"].Value.Trim();
+                    string incompassed = match.Groups["incompassed"].Value.Trim();
+                    string after = match.Groups["after"].Value.Trim();
 
-                    string first = match.Groups["first"].Value.Trim();
-                    string second = match.Groups["second"].Value.Trim();
+                    bool hasSpaceBefore = HasSpaceBeforeOpenParenthesis(translation);
+                    bool hasSpaceAfter = HasSpaceAfterOpenParenthesis(translation);
+                    string spaceOrNotBefore = hasSpaceBefore ? " " : string.Empty;
+                    string spaceOrNotAfter = hasSpaceAfter ? " " : string.Empty;
 
-                    resultTranslations.Add($"{first} {second}");
-                    resultTranslations.Add(isReversedCase ? second : first);
+                    resultTranslations.Add(
+                        $"{before}{spaceOrNotBefore}{incompassed}{spaceOrNotAfter}{after}".Trim()
+                    );
+                    resultTranslations.Add($"{before} {after}".Trim());
                 });
 
             return resultTranslations;
+        }
+
+        private static bool HasSpaceBeforeOpenParenthesis(string word)
+        {
+            int parenthesisIndex = word.IndexOf('(');
+
+            int indexOfSpace = word.IndexOf(' ', parenthesisIndex - 1, 1);
+
+            return parenthesisIndex - indexOfSpace == 1;
+        }
+
+        private static bool HasSpaceAfterOpenParenthesis(string word)
+        {
+            int parenthesisIndex = word.IndexOf(')');
+
+            int indexOfSpace = word.IndexOf(' ', parenthesisIndex + 1, 1);
+
+            return indexOfSpace - parenthesisIndex == 1;
         }
 
         private void PrintCorrectTranslationInfo(string[] translationsData)
@@ -293,7 +322,8 @@ namespace EnglishWordsExam.Strategies
 
             List<string> result = [.. noProcessTranslations];
 
-            List<string> filteredTranslations = [.. translations.Where(x => x.Contains(symbolToCheck))];
+            List<string> filteredTranslations = [..translations.Where(x => x.Contains(symbolToCheck))];
+
             if (filteredTranslations.Count > 0)
             {
                 List<string> translationsToAdd = this.GetAllTranslationsForWordWithAdditionInParenthesis(filteredTranslations);
@@ -303,7 +333,7 @@ namespace EnglishWordsExam.Strategies
             filteredTranslations = [.. translations.Where(x => x.Contains(symbolVisaVersa))];
             if (filteredTranslations.Count > 0)
             {
-                List<string> translationsViseVersa = this.GetAllTranslationsForVisaVersaType(filteredTranslations);
+                List<string> translationsViseVersa = GetAllTranslationsForVisaVersaType(filteredTranslations);
                 result.AddRange(translationsViseVersa);
             }
 
