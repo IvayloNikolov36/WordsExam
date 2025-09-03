@@ -1,4 +1,5 @@
 ﻿using EnglishWordsExam.Enums;
+using EnglishWordsExam.Exceptions;
 using EnglishWordsExam.Models;
 using EnglishWordsExam.Utilities;
 using System;
@@ -63,10 +64,27 @@ namespace EnglishWordsExam.Strategies
                     inputTranslation = Console.ReadLine();
                 }
 
-                bool isTranslationRight = this.IsGivenTranslationRight(
-                    inputTranslation,
-                    translationsData,
-                    translationType);
+                bool isTranslationRight = true;
+
+                try
+                {
+                    isTranslationRight = this.IsGivenTranslationRight(
+                        inputTranslation,
+                        translationsData,
+                        translationType);
+                }
+                catch (TranslationParseException trEx)
+                {
+                    if (trEx.InnerException is RegexMatchException)
+                    {
+                        // save info in txt file so the regex or the word to be revised
+                    }
+                    this.PrintExceptionalProcessTranslationMessage();
+                }
+                catch (Exception)
+                {
+                    this.PrintExceptionalProcessTranslationMessage();
+                }
 
                 if (!isTranslationRight)
                 {
@@ -184,13 +202,25 @@ namespace EnglishWordsExam.Strategies
             Console.WriteLine(hints.ToString());
         }
 
-        private bool IsGivenTranslationRight(string givenTranslation, string[] translationsData, TranslationType translationType)
+        private bool IsGivenTranslationRight(
+            string givenTranslation,
+            string[] translationsData,
+            TranslationType translationType)
         {
             if (translationType == TranslationType.EnglishToBulgarian)
             {
-                List<string> allTranslations = this.GetAllTranslations(translationsData);
+                try
+                {
+                    List<string> allTranslations = this.GetAllTranslations(translationsData);
 
-                return allTranslations.Contains(givenTranslation);
+                    return allTranslations.Contains(givenTranslation);
+                }
+                catch (Exception ex)
+                {
+                    throw new TranslationParseException(
+                        "Translations cannot be processed.",
+                        ex);
+                }
             }
 
             return translationsData[0] == givenTranslation;
@@ -222,6 +252,11 @@ namespace EnglishWordsExam.Strategies
             {
                 Match match = rgx.Match(translation);
 
+                if (!match.Success)
+                {
+                    throw new RegexMatchException($"""Translation "{translation}" cannot be processed.""");
+                }
+
                 string beforePart = match.Groups["before"].Value.Trim();
 
                 string left = match.Groups["left"].Value.Trim();
@@ -247,12 +282,13 @@ namespace EnglishWordsExam.Strategies
 
         private List<string> GetAllTranslationsForWordWithAdditionInParenthesis(List<string> translations)
         {
-            //case1: лея (се) => ["лея", "лея се"]
-            //case2: (из)обилен => ["изобилен", "обилен"]
-            //case3: прекалено (из)обилен => ["прекалено изобилен", "прекалено обилен"]
-            //case4: извинявам (се) предварително => ["извинявам предварително", "извинявам се предварително"]
-            
-            Regex rgx = new(@"(?<before>[\w\s]*)\s*\((?<incompassed>\w+)\)\s*(?<after>[\w\s]*)");
+            // case1: лея (се) => ["лея", "лея се"]
+            // case2: (из)обилен => ["изобилен", "обилен"]
+            // case3: изключвам (възможността за) => ["изключвам", "изключвам възможността за", изключвам (възможността за)]
+            // case4: прекалено (из)обилен => ["прекалено изобилен", "прекалено обилен"]
+            // case5: извинявам (се) предварително => ["извинявам предварително", "извинявам се предварително"]
+
+            Regex rgx = new(@"(?<before>[\w\s]*)\s*\((?<incompassed>[\w\s]+)\)\s*(?<after>[\w\s]*)");
 
             List<string> resultTranslations = new(translations.Count * 2);
 
@@ -261,15 +297,21 @@ namespace EnglishWordsExam.Strategies
                 {
                     Match match = rgx.Match(translation);
 
+                    if (!match.Success)
+                    {
+                        throw new RegexMatchException($"""Translation "{translation}" cannot be processed.""");
+                    }
+
                     string before = match.Groups["before"].Value.Trim();
                     string incompassed = match.Groups["incompassed"].Value.Trim();
                     string after = match.Groups["after"].Value.Trim();
 
                     bool hasSpaceBefore = HasSpaceBeforeOpenParenthesis(translation);
-                    bool hasSpaceAfter = HasSpaceAfterOpenParenthesis(translation);
+                    bool hasSpaceAfter = HasSpaceAfterCloseParenthesis(translation);
                     string spaceOrNotBefore = hasSpaceBefore ? " " : string.Empty;
                     string spaceOrNotAfter = hasSpaceAfter ? " " : string.Empty;
 
+                    resultTranslations.Add(translation);
                     resultTranslations.Add(
                         $"{before}{spaceOrNotBefore}{incompassed}{spaceOrNotAfter}{after}".Trim()
                     );
@@ -281,16 +323,30 @@ namespace EnglishWordsExam.Strategies
 
         private static bool HasSpaceBeforeOpenParenthesis(string word)
         {
-            int parenthesisIndex = word.IndexOf('(');
+            const char parenthesisSymbol = '(';
+
+            if (word.First() == parenthesisSymbol)
+            {
+                return false;
+            }
+
+            int parenthesisIndex = word.IndexOf(parenthesisSymbol);
 
             int indexOfSpace = word.IndexOf(' ', parenthesisIndex - 1, 1);
 
             return parenthesisIndex - indexOfSpace == 1;
         }
 
-        private static bool HasSpaceAfterOpenParenthesis(string word)
+        private static bool HasSpaceAfterCloseParenthesis(string word)
         {
-            int parenthesisIndex = word.IndexOf(')');
+            const char parenthesisSymbol = ')';
+
+            if (word.Last() == parenthesisSymbol)
+            {
+                return false;
+            }
+
+            int parenthesisIndex = word.IndexOf(parenthesisSymbol);
 
             int indexOfSpace = word.IndexOf(' ', parenthesisIndex + 1, 1);
 
@@ -322,7 +378,7 @@ namespace EnglishWordsExam.Strategies
 
             List<string> result = [.. noProcessTranslations];
 
-            List<string> filteredTranslations = [..translations.Where(x => x.Contains(symbolToCheck))];
+            List<string> filteredTranslations = [.. translations.Where(x => x.Contains(symbolToCheck))];
 
             if (filteredTranslations.Count > 0)
             {
@@ -338,6 +394,11 @@ namespace EnglishWordsExam.Strategies
             }
 
             return result;
+        }
+
+        private void PrintExceptionalProcessTranslationMessage()
+        {
+            ConsoleWrite.ExceptionalInfoLine("An exception occurred, so your answer would be accepted as true.");
         }
     }
 }
