@@ -1,24 +1,24 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
+using SplitOptions = System.StringSplitOptions;
+using static EnglishWordsExam.Constants;
 
-namespace EnglishWordsExam.Parsers
+namespace EnglishWordsExam.Parsers;
+
+public static class FileDataParser
 {
-    public static class FileDataParser
+    public static string[] GetLineTokens(string dataLine)
     {
-        public static string[] GetLineTokens(string dataLine)
-        {
-            return dataLine
-                .Split(new[] { Constants.DelimiterWordTranslation }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(word => word.Trim())
-                .ToArray();
-        }
+        return dataLine
+            .Split([DelimiterWordTranslation], SplitOptions.RemoveEmptyEntries)
+            .Select(word => word.Trim())
+            .ToArray();
+    }
 
-        public static string[] GetWordTranslationTokens(string[] lineTokens)
-        {
-            return lineTokens[1]
-            .Split(new[] { Constants.TranslationsDelimiter }, StringSplitOptions.RemoveEmptyEntries)
+    public static string[] GetWordTranslationTokens(string[] lineTokens)
+    {
+        return lineTokens[1]
+            .Split([TranslationsDelimiter], SplitOptions.RemoveEmptyEntries)
             .Select(w => w.Trim())
             .ToArray();
-        }
     }
 }
