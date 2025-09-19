@@ -20,19 +20,20 @@ namespace EnglishWordsExam
         {
             LoadWordsResult wordsResult = this.reader.LoadWords();
 
-            this.PrintTotalWords(wordsResult.WordsCount);
+            PrintTotalWords(wordsResult.WordsCount);
 
             bool newTurn = true;
             while (newTurn)
             {
-                int wordsToTranslate = ConsoleInputParser.GetWordsCountForTranslation(wordsResult.WordsCount);
+                int wordsCountForTranslation = ConsoleInputParser
+                    .GetWordsCountForTranslation(wordsResult.WordsCount);
 
-                TranslationType selectedTranslation = ConsoleInputParser.GetTranslationType();
+                TranslationType selectedTranslationType = ConsoleInputParser.GetTranslationType();
 
                 ExamProcessor exam = new(
                     wordsResult.Words,
-                    wordsToTranslate,
-                    selectedTranslation,
+                    wordsCountForTranslation,
+                    selectedTranslationType,
                     new SpaciousSupplementaryExamStrategy());
 
                 exam.Start();
@@ -47,7 +48,7 @@ namespace EnglishWordsExam
             }
         }
 
-        private void PrintTotalWords(int count)
+        private static void PrintTotalWords(int count)
         {
             Console.WriteLine($"Total words in dictionary {count}.");
         }

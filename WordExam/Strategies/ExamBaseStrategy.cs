@@ -136,8 +136,7 @@ namespace EnglishWordsExam.Strategies
                 return;
             }
 
-
-            HashSet<int> hintedAndWrongWordIndexes = new();
+            HashSet<int> hintedAndWrongWordIndexes = [];
 
             for (int round = 0; round < this.SupplementaryExamRounds; round++)
             {
@@ -205,11 +204,9 @@ namespace EnglishWordsExam.Strategies
 
         private void ShowTranslationInfo(string[] translationsData)
         {
-            string message = string.Empty;
-            message += $"Translations:{Environment.NewLine}";
+            string message = Environment.NewLine;
             message += $"{Environment.NewLine}---";
             message += $"{string.Join($"{Environment.NewLine}---", translationsData)}";
-
             ConsoleWrite.InfoLine(message);
         }
 
