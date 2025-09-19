@@ -11,7 +11,7 @@ namespace EnglishWordsExam.Strategies
 
         protected override int SupplementaryExamRounds => DefaultSupplementaryExamRounds;
 
-        public override void ProcessExam(IEnumerable<DictionaryWord> examWords, TranslationType translationType)
+        public override void ConductExam(IEnumerable<DictionaryWord> examWords, TranslationType translationType)
         {
             (HashSet<int> hinted, HashSet<int> wrongTranslated) = this.Process(examWords, translationType);
 

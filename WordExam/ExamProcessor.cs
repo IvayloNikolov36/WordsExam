@@ -34,7 +34,7 @@ namespace EnglishWordsExam
                 .Shared
                 .GetItems(this.words, this.wordsToTranslate);
 
-            this.examStrategy.ProcessExam(examWords, this.translationType);
+            this.examStrategy.ConductExam(examWords, this.translationType);
         }
     }
 }

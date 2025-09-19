@@ -5,32 +5,33 @@ using EnglishWordsExam.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 
 namespace EnglishWordsExam.Strategies
 {
     public abstract class ExamBaseStrategy : IExamStrategy
     {
         private const int DefaultSupplementaryExamRounds = 0;
+        private const string TranslationProcessException = "An exception occurred, so your answer would be accepted as true.";
 
         protected ExamBaseStrategy()
         {
-            this.WordsForSupplementaryExam = new List<DictionaryWord>();
+            this.WordsForSupplementaryExam = [];
         }
 
         protected List<DictionaryWord> WordsForSupplementaryExam { get; }
 
         protected virtual int SupplementaryExamRounds { get; } = DefaultSupplementaryExamRounds;
 
-        public abstract void ProcessExam(IEnumerable<DictionaryWord> examWords, TranslationType translationType);
+        public abstract void ConductExam(
+            IEnumerable<DictionaryWord> examWords,
+            TranslationType translationType);
 
         protected (HashSet<int> hintedWords, HashSet<int> wrongTranslatedWords) Process(
             IEnumerable<DictionaryWord> examWords,
             TranslationType translationType)
         {
-            HashSet<int> hintedWordsIndexes = new();
-            HashSet<int> wrongTranslatedWordsIndexes = new();
+            HashSet<int> hintedWordsIndexes = [];
+            HashSet<int> wrongTranslatedWordsIndexes = [];
 
             int correctlyTranslated = 0;
 
@@ -58,7 +59,8 @@ namespace EnglishWordsExam.Strategies
 
                 if (needsHint)
                 {
-                    this.PrintHints(translationsData, Constants.SymbolsToReveal);
+                    ConsoleWrite.InfoLine(
+                        ExamUtiliser.GetTranslationHints(translationsData, Constants.SymbolsToReveal));
                     hintedWordsIndexes.Add(wordIndex);
                     Console.Write("Your Translation: ");
                     inputTranslation = Console.ReadLine();
@@ -79,17 +81,18 @@ namespace EnglishWordsExam.Strategies
                     {
                         // save info in txt file so the regex or the word to be revised
                     }
-                    this.PrintExceptionalProcessTranslationMessage();
+                    this.ShowExceptionalProcessTranslationMessage();
                 }
                 catch (Exception)
                 {
-                    this.PrintExceptionalProcessTranslationMessage();
+                    this.ShowExceptionalProcessTranslationMessage();
                 }
 
                 if (!isTranslationRight)
                 {
                     wrongTranslatedWordsIndexes.Add(wordIndex);
-                    this.PrintCorrectTranslationInfo(translationsData);
+                    ConsoleWrite.ErrorLine("Wrong!");
+                    this.ShowTranslationInfo(translationsData);
                     continue;
                 }
 
@@ -98,13 +101,11 @@ namespace EnglishWordsExam.Strategies
 
                 if (translationType == TranslationType.EnglishToBulgarian)
                 {
-                    ConsoleWrite.InfoLine("All translations: ");
-                    ConsoleWrite.Info($"{Environment.NewLine}---");
-                    ConsoleWrite.InfoLine(string.Join($"{Environment.NewLine}---", translationsData));
+                    this.ShowTranslationInfo(translationsData);
                 }
             }
 
-            this.PrintResult(correctlyTranslated, wordIndex + 1);
+            this.ShowExamResult(correctlyTranslated, wordIndex + 1);
 
             return (hintedWordsIndexes, wrongTranslatedWordsIndexes);
         }
@@ -114,7 +115,7 @@ namespace EnglishWordsExam.Strategies
             HashSet<int> resultWordsIndexes,
             TranslationType translationType)
         {
-            List<DictionaryWord> wordsPortion = this.GetWordsPortion(examWords, resultWordsIndexes);
+            IEnumerable<DictionaryWord> wordsPortion = this.GetWordsPortion(examWords, resultWordsIndexes);
 
             this.WordsForSupplementaryExam.AddRange(wordsPortion);
 
@@ -130,76 +131,44 @@ namespace EnglishWordsExam.Strategies
 
                 this.WordsForSupplementaryExam.Clear();
 
-                this.ProcessExam(wordsPortion, translationType);
+                this.ConductExam(wordsPortion, translationType);
+
+                return;
             }
 
-            if (this.SupplementaryExamRounds > 1)
+
+            HashSet<int> hintedAndWrongWordIndexes = new();
+
+            for (int round = 0; round < this.SupplementaryExamRounds; round++)
             {
-                HashSet<int> hintedAndWrongWordIndexes = new();
-
-                for (int round = 0; round < this.SupplementaryExamRounds; round++)
-                {
-                    if (this.WordsForSupplementaryExam.Count == 0)
-                    {
-                        return;
-                    }
-
-                    ConsoleWrite.AnnouncementLine(
-                        $"Supplementary exam round {round + 1} ({this.WordsForSupplementaryExam.Count} word(s)).");
-
-                    (HashSet<int> hinted, HashSet<int> wrong) = this.Process(
-                        this.WordsForSupplementaryExam.ToArray(),
-                        translationType);
-
-                    hintedAndWrongWordIndexes.UnionWith(hinted.Union(wrong));
-                }
-
-                if (hintedAndWrongWordIndexes.Count == 0)
+                if (this.WordsForSupplementaryExam.Count == 0)
                 {
                     return;
                 }
 
-                this.WordsForSupplementaryExam.Clear();
-                this.ProcessSupplementaryExam(wordsPortion, hintedAndWrongWordIndexes, translationType);
+                ConsoleWrite.AnnouncementLine(
+                    $"Supplementary exam round {round + 1} ({this.WordsForSupplementaryExam.Count} word(s)).");
+
+                (HashSet<int> hinted, HashSet<int> wrong) = this.Process(
+                    this.WordsForSupplementaryExam.ToArray(),
+                    translationType);
+
+                hintedAndWrongWordIndexes.UnionWith(hinted.Union(wrong));
             }
+
+            if (hintedAndWrongWordIndexes.Count == 0)
+            {
+                return;
+            }
+
+            this.WordsForSupplementaryExam.Clear();
+            this.ProcessSupplementaryExam(wordsPortion, hintedAndWrongWordIndexes, translationType);
         }
 
         protected bool IsHintCommand(string command)
         {
             return command == Constants.HintCommand
                 || command == Constants.HintCommandCyrilic;
-        }
-
-        protected void PrintHints(string[] translations, int symbolsToReveal)
-        {
-            StringBuilder hints = new();
-
-            foreach (string word in translations)
-            {
-                string visiblePart = new string(word.Take(symbolsToReveal).ToArray());
-                hints.Append(visiblePart);
-
-                IEnumerable<char> symbolsToConceal = word
-                    .Skip(symbolsToReveal)
-                    .Take(word.Length - symbolsToReveal);
-
-                char[] concealed = symbolsToConceal
-                    .Select(symbol =>
-                    {
-                        if (symbol == ' ')
-                        {
-                            return symbol;
-                        }
-
-                        return Constants.HintMaskSymbol;
-                    })
-                    .ToArray();
-
-                hints.Append(new string(concealed));
-                hints.AppendLine($". ({word.Length}) symbols.");
-            }
-
-            Console.WriteLine(hints.ToString());
         }
 
         private bool IsGivenTranslationRight(
@@ -211,7 +180,7 @@ namespace EnglishWordsExam.Strategies
             {
                 try
                 {
-                    List<string> allTranslations = this.GetAllTranslations(translationsData);
+                    List<string> allTranslations = ExamUtiliser.CompileAllTranslations(translationsData);
 
                     return allTranslations.Contains(givenTranslation);
                 }
@@ -226,179 +195,33 @@ namespace EnglishWordsExam.Strategies
             return translationsData[0] == givenTranslation;
         }
 
-        private List<DictionaryWord> GetWordsPortion(IEnumerable<DictionaryWord> examWords, HashSet<int> wordsIndexes)
+        private IEnumerable<DictionaryWord> GetWordsPortion(
+            IEnumerable<DictionaryWord> examWords,
+            HashSet<int> wordsIndexes)
         {
-            int index = 0;
-            List<DictionaryWord> result = new List<DictionaryWord>(wordsIndexes.Count);
-
-            foreach (DictionaryWord item in examWords)
-            {
-                if (wordsIndexes.Contains(index++))
-                {
-                    result.Add(item);
-                }
-            }
-
-            return result;
+            return examWords
+                .Where((word, index) => wordsIndexes.Contains(index));
         }
 
-        private static List<string> GetAllTranslationsForVisaVersaType(List<string> translations)
+        private void ShowTranslationInfo(string[] translationsData)
         {
-            Regex rgx = new(@"(?<before>[\w\s]*?)((?<left>\w+)(\/(?<right>\w+))+)(?<after>[\w\s]*)");
+            string message = string.Empty;
+            message += $"Translations:{Environment.NewLine}";
+            message += $"{Environment.NewLine}---";
+            message += $"{string.Join($"{Environment.NewLine}---", translationsData)}";
 
-            List<string> resultTranslations = new();
-
-            translations.ForEach((string translation) =>
-            {
-                Match match = rgx.Match(translation);
-
-                if (!match.Success)
-                {
-                    throw new RegexMatchException($"""Translation "{translation}" cannot be processed.""");
-                }
-
-                string beforePart = match.Groups["before"].Value.Trim();
-
-                string left = match.Groups["left"].Value.Trim();
-                string right = match.Groups["right"].Value.Trim();
-
-                string afterPart = match.Groups["after"].Value.Trim();
-
-                if (beforePart.Trim().Length == 0)
-                {
-                    resultTranslations.Add($"{left} {afterPart}");
-                    resultTranslations.Add($"{right} {afterPart}");
-                }
-
-                if (afterPart.Trim().Length == 0)
-                {
-                    resultTranslations.Add($"{beforePart} {left}");
-                    resultTranslations.Add($"{beforePart} {right}");
-                }
-            });
-
-            return resultTranslations;
+            ConsoleWrite.InfoLine(message);
         }
 
-        private List<string> GetAllTranslationsForWordWithAdditionInParenthesis(List<string> translations)
+        private void ShowExamResult(int correct, int wordsCount)
         {
-            // case1: лея (се) => ["лея", "лея се"]
-            // case2: (из)обилен => ["изобилен", "обилен"]
-            // case3: изключвам (възможността за) => ["изключвам", "изключвам възможността за", изключвам (възможността за)]
-            // case4: прекалено (из)обилен => ["прекалено изобилен", "прекалено обилен"]
-            // case5: извинявам (се) предварително => ["извинявам предварително", "извинявам се предварително"]
-
-            Regex rgx = new(@"(?<before>[\w\s]*)\s*\((?<incompassed>[\w\s]+)\)\s*(?<after>[\w\s]*)");
-
-            List<string> resultTranslations = new(translations.Count * 2);
-
-            translations
-                .ForEach((string translation) =>
-                {
-                    Match match = rgx.Match(translation);
-
-                    if (!match.Success)
-                    {
-                        throw new RegexMatchException($"""Translation "{translation}" cannot be processed.""");
-                    }
-
-                    string before = match.Groups["before"].Value.Trim();
-                    string incompassed = match.Groups["incompassed"].Value.Trim();
-                    string after = match.Groups["after"].Value.Trim();
-
-                    bool hasSpaceBefore = HasSpaceBeforeOpenParenthesis(translation);
-                    bool hasSpaceAfter = HasSpaceAfterCloseParenthesis(translation);
-                    string spaceOrNotBefore = hasSpaceBefore ? " " : string.Empty;
-                    string spaceOrNotAfter = hasSpaceAfter ? " " : string.Empty;
-
-                    resultTranslations.Add(translation);
-                    resultTranslations.Add(
-                        $"{before}{spaceOrNotBefore}{incompassed}{spaceOrNotAfter}{after}".Trim()
-                    );
-                    resultTranslations.Add($"{before} {after}".Trim());
-                });
-
-            return resultTranslations;
+            string message = $"Translated correctly {correct}/{wordsCount}.";
+            ConsoleWrite.InfoLine(message);
         }
 
-        private static bool HasSpaceBeforeOpenParenthesis(string word)
+        private void ShowExceptionalProcessTranslationMessage()
         {
-            const char parenthesisSymbol = '(';
-
-            if (word.First() == parenthesisSymbol)
-            {
-                return false;
-            }
-
-            int parenthesisIndex = word.IndexOf(parenthesisSymbol);
-
-            int indexOfSpace = word.IndexOf(' ', parenthesisIndex - 1, 1);
-
-            return parenthesisIndex - indexOfSpace == 1;
-        }
-
-        private static bool HasSpaceAfterCloseParenthesis(string word)
-        {
-            const char parenthesisSymbol = ')';
-
-            if (word.Last() == parenthesisSymbol)
-            {
-                return false;
-            }
-
-            int parenthesisIndex = word.IndexOf(parenthesisSymbol);
-
-            int indexOfSpace = word.IndexOf(' ', parenthesisIndex + 1, 1);
-
-            return indexOfSpace - parenthesisIndex == 1;
-        }
-
-        private void PrintCorrectTranslationInfo(string[] translationsData)
-        {
-            ConsoleWrite.ErrorLine("Wrong!");
-            ConsoleWrite.InfoLine("Correct translation:");
-
-            ConsoleWrite.Info($"{Environment.NewLine}---");
-            ConsoleWrite.InfoLine($"{string.Join($"{Environment.NewLine}---", translationsData)}");
-        }
-
-        private void PrintResult(int correct, int wordsCount)
-        {
-            Console.WriteLine();
-            ConsoleWrite.InfoLine($"Translated correctly {correct}/{wordsCount}.");
-        }
-
-        private List<string> GetAllTranslations(string[] translations)
-        {
-            char symbolToCheck = '(';
-            char symbolVisaVersa = '/';
-
-            IEnumerable<string> noProcessTranslations = translations
-                .Where(x => !x.Contains(symbolToCheck) && !x.Contains(symbolVisaVersa));
-
-            List<string> result = [.. noProcessTranslations];
-
-            List<string> filteredTranslations = [.. translations.Where(x => x.Contains(symbolToCheck))];
-
-            if (filteredTranslations.Count > 0)
-            {
-                List<string> translationsToAdd = this.GetAllTranslationsForWordWithAdditionInParenthesis(filteredTranslations);
-                result.AddRange(translationsToAdd);
-            }
-
-            filteredTranslations = [.. translations.Where(x => x.Contains(symbolVisaVersa))];
-            if (filteredTranslations.Count > 0)
-            {
-                List<string> translationsViseVersa = GetAllTranslationsForVisaVersaType(filteredTranslations);
-                result.AddRange(translationsViseVersa);
-            }
-
-            return result;
-        }
-
-        private void PrintExceptionalProcessTranslationMessage()
-        {
-            ConsoleWrite.ExceptionalInfoLine("An exception occurred, so your answer would be accepted as true.");
+            ConsoleWrite.ExceptionalInfoLine(TranslationProcessException);
         }
     }
 }

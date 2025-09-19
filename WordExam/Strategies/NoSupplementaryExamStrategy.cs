@@ -6,7 +6,7 @@ namespace EnglishWordsExam.Strategies
 {
     public class NoSupplementaryExamStrategy : ExamBaseStrategy
     {
-        public override void ProcessExam(IEnumerable<DictionaryWord> examWords, TranslationType translationType)
+        public override void ConductExam(IEnumerable<DictionaryWord> examWords, TranslationType translationType)
         {
             this.Process(examWords, translationType);
         }

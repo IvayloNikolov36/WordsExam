@@ -10,7 +10,7 @@ namespace EnglishWordsExam.Strategies
 
         protected override int SupplementaryExamRounds => DefaultSupplementaryExamRounds;
 
-        public override void ProcessExam(IEnumerable<DictionaryWord> examWords, TranslationType translationType)
+        public override void ConductExam(IEnumerable<DictionaryWord> examWords, TranslationType translationType)
         {
             (_, HashSet<int> wrongTranslatedWords) = this.Process(examWords, translationType);
 

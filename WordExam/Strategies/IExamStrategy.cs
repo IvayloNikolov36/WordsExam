@@ -6,6 +6,6 @@ namespace EnglishWordsExam.Strategies
 {
     public interface IExamStrategy
     {
-        void ProcessExam(IEnumerable<DictionaryWord> examWords, TranslationType translationType);
+        void ConductExam(IEnumerable<DictionaryWord> examWords, TranslationType translationType);
     }
 }
