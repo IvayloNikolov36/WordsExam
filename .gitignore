@@ -349,3 +349,4 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 /JobFinder.Web/appsettings.json
+EnglishWordsExam.WPF/wwwroot/css/bootstrap/bootstrap.min.css
