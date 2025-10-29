@@ -1,6 +1,6 @@
 ﻿using EnglishWordsExam.Enums;
 using EnglishWordsExam.Models;
-using EnglishWordsExam.Strategies;
+using EnglishWordsExam.Strategies.Contracts;
 using System;
 using System.Collections.Generic;
 using static EnglishWordsExam.Constants;

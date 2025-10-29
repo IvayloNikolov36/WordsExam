@@ -1,6 +1,9 @@
 ﻿using EnglishWordsExam.Enums;
+using EnglishWordsExam.EventHandlers;
+using EnglishWordsExam.EventHandlers.EventArguments;
 using EnglishWordsExam.Exceptions;
 using EnglishWordsExam.Models;
+using EnglishWordsExam.Strategies.Contracts;
 using EnglishWordsExam.Utilities;
 using System;
 using System.Collections.Generic;
@@ -13,9 +16,23 @@ namespace EnglishWordsExam.Strategies
         private const int DefaultSupplementaryExamRounds = 0;
         private const string TranslationProcessException = "An exception occurred, so your answer would be accepted as true.";
 
+        public event OnTranslationSendEventHandler OnWordForTranslationSending;
+        public event OnTranslationResultSendEventHandler OnTranslationResultSending;
+        public event OnTranslationHintsSendEventHandler OnTranslationHintsSending;
+        public event OnExamMessageSendEventHandler OnExamMessageSend;
+        public event OnExamCompletedEventHandler OnExamCompleted;
+
+        private string receivedTranslation = null;
+
         protected ExamBaseStrategy()
         {
             this.WordsForSupplementaryExam = [];
+        }
+
+        protected ExamBaseStrategy(IEventTranslationSender eventSender)
+            : this()
+        {
+            eventSender.OnTranslationSendEvent += EventTranslation_OnTranslationEvent;
         }
 
         protected List<DictionaryWord> WordsForSupplementaryExam { get; }
@@ -51,19 +68,32 @@ namespace EnglishWordsExam.Strategies
                     ? translations
                     : [englishWord];
 
-                Console.WriteLine();
-                Console.Write($"{wordIndex + 1}. Translate: '{textToTranslate}': ");
-                string inputTranslation = Console.ReadLine();
+                this.OnWordForTranslationSending(this, new TranslationEventArgs(textToTranslate, wordIndex));
+
+                while (this.receivedTranslation == null)
+                {
+                    continue;
+                }
+
+                string inputTranslation = this.receivedTranslation;
+                this.receivedTranslation = null;
 
                 bool needsHint = this.IsHintCommand(inputTranslation);
-
                 if (needsHint)
                 {
-                    ConsoleWrite.InfoLine(
-                        ExamUtiliser.GetTranslationHints(translationsData, Constants.SymbolsToReveal));
+                    string translationHints = ExamUtiliser.GetTranslationHints(translationsData, Constants.SymbolsToReveal);
+
+                    this.OnTranslationHintsSending(this, new TranslationEventArgs(translationHints));
+
                     hintedWordsIndexes.Add(wordIndex);
-                    Console.Write("Your Translation: ");
-                    inputTranslation = Console.ReadLine();
+
+                    while (this.receivedTranslation == null)
+                    {
+                        continue;
+                    }
+
+                    inputTranslation = this.receivedTranslation;
+                    this.receivedTranslation = null;
                 }
 
                 bool isTranslationRight = true;
@@ -81,31 +111,31 @@ namespace EnglishWordsExam.Strategies
                     {
                         // save info in txt file so the regex or the word to be revised
                     }
-                    this.ShowExceptionalProcessTranslationMessage();
+
+                    this.OnExamMessageSend(this, new MessageEventArgs(TranslationProcessException));
                 }
                 catch (Exception)
                 {
-                    this.ShowExceptionalProcessTranslationMessage();
+                    this.OnExamMessageSend(this, new MessageEventArgs(TranslationProcessException));
                 }
 
                 if (!isTranslationRight)
                 {
                     wrongTranslatedWordsIndexes.Add(wordIndex);
-                    ConsoleWrite.ErrorLine("Wrong!");
-                    this.ShowTranslationInfo(translationsData);
+                    this.OnTranslationResultSending(this, new TranslationResultEventArgs(false, translationsData));
                     continue;
                 }
 
                 correctlyTranslated++;
-                ConsoleWrite.SuccessLine("Right!");
 
-                if (translationType == TranslationType.EnglishToBulgarian)
-                {
-                    this.ShowTranslationInfo(translationsData);
-                }
+                this.OnTranslationResultSending(this, new TranslationResultEventArgs(
+                    isCorrect: true,
+                    translationType == TranslationType.EnglishToBulgarian
+                        ? translationsData
+                        : []));
             }
 
-            this.ShowExamResult(correctlyTranslated, wordIndex + 1);
+            this.OnExamCompleted(this, new ExamComplitionEventArgs(correctlyTranslated, wordIndex + 1));
 
             return (hintedWordsIndexes, wrongTranslatedWordsIndexes);
         }
@@ -116,7 +146,7 @@ namespace EnglishWordsExam.Strategies
             TranslationType translationType)
         {
             IEnumerable<DictionaryWord> wordsPortion = this.GetWordsPortion(examWords, resultWordsIndexes);
-
+ 
             this.WordsForSupplementaryExam.AddRange(wordsPortion);
 
             if (this.WordsForSupplementaryExam.Count == 0)
@@ -126,8 +156,7 @@ namespace EnglishWordsExam.Strategies
 
             if (this.SupplementaryExamRounds == 1)
             {
-                ConsoleWrite.AnnouncementLine(
-                    $"Supplementary exam ({this.WordsForSupplementaryExam.Count} word(s)).");
+                this.OnExamMessageSend(this, new MessageEventArgs($"Supplementary exam ({this.WordsForSupplementaryExam.Count} word(s))."));
 
                 this.WordsForSupplementaryExam.Clear();
 
@@ -202,23 +231,9 @@ namespace EnglishWordsExam.Strategies
                 .Where((word, index) => wordsIndexes.Contains(index));
         }
 
-        private void ShowTranslationInfo(string[] translationsData)
+        private void EventTranslation_OnTranslationEvent(object sender, TranslationEventArgs translation)
         {
-            string message = Environment.NewLine;
-            message += $"{Environment.NewLine}---";
-            message += $"{string.Join($"{Environment.NewLine}---", translationsData)}";
-            ConsoleWrite.InfoLine(message);
-        }
-
-        private void ShowExamResult(int correct, int wordsCount)
-        {
-            string message = $"Translated correctly {correct}/{wordsCount}.";
-            ConsoleWrite.InfoLine(message);
-        }
-
-        private void ShowExceptionalProcessTranslationMessage()
-        {
-            ConsoleWrite.ExceptionalInfoLine(TranslationProcessException);
+            this.receivedTranslation = translation.Text;
         }
     }
 }

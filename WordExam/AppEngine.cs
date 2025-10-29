@@ -1,20 +1,29 @@
 ﻿using EnglishWordsExam.Enums;
+using EnglishWordsExam.EventHandlers;
+using EnglishWordsExam.EventHandlers.EventArguments;
 using EnglishWordsExam.Models;
 using EnglishWordsExam.Parsers;
 using EnglishWordsExam.Strategies;
+using EnglishWordsExam.Strategies.Contracts;
 using EnglishWordsExam.Utilities;
 using System;
 
 namespace EnglishWordsExam
 {
-    public class AppEngine
+    public class AppEngine : IEventTranslationSender
     {
         private readonly IReader reader;
+
+        public event OnTranslationSendEventHandler OnTranslationSendEvent;
+
+        private string inputTranslation = null;
 
         public AppEngine(IReader reader)
         {
             this.reader = reader;
         }
+
+        public TranslationType SelectedTranslationType { get; private set; }
 
         public void Run()
         {
@@ -28,29 +37,96 @@ namespace EnglishWordsExam
                 int wordsCountForTranslation = ConsoleInputParser
                     .GetWordsCountForTranslation(wordsResult.WordsCount);
 
-                TranslationType selectedTranslationType = ConsoleInputParser.GetTranslationType();
+                this.SelectedTranslationType = ConsoleInputParser.GetTranslationType();
+
+                IExamStrategy examStrategy = new SpaciousSupplementaryExamStrategy(this);
+
+                examStrategy.OnWordForTranslationSending += ExamStrategy_OnWordForTranslationSending;
+                examStrategy.OnTranslationResultSending += ExamStrategy_OnTranslationResultSending;
+                examStrategy.OnExamMessageSend += ExamStrategy_OnExamMessageSend;
+                examStrategy.OnTranslationHintsSending += ExamStrategy_OnTranslationHintsSending;
+                examStrategy.OnExamCompleted += ExamStrategy_OnExamCompleted;
 
                 ExamProcessor exam = new(
                     wordsResult.Words,
                     wordsCountForTranslation,
-                    selectedTranslationType,
-                    new SpaciousSupplementaryExamStrategy());
+                    this.SelectedTranslationType,
+                    examStrategy
+                );
 
                 exam.Start();
 
-                ConsoleWrite.AnnouncementLine("If you don't want to take another exam, input exit. (Every other input will start a new exam)");
+                ConsoleWrite
+                    .AnnouncementLine("If you want to proceed with another exam, input new. (Every other input will terminate the program");
 
                 string choice = Console.ReadLine().Trim().ToLower();
-                if (choice == Constants.ExitCommand)
+                if (choice.Equals(Constants.ExitCommand, StringComparison.CurrentCultureIgnoreCase))
                 {
                     Environment.Exit(0);
                 }
             }
         }
 
+        private void ExamStrategy_OnExamCompleted(object sender, ExamComplitionEventArgs eventArgs)
+        {
+            string message = $"Translated correctly {eventArgs.CorrectWordsCount}/{eventArgs.TotalWordsCount}.";
+            ConsoleWrite.InfoLine(message);
+        }
+
+        private void ExamStrategy_OnTranslationHintsSending(object sender, TranslationEventArgs eventArgs)
+        {
+            string hintedTranslation = eventArgs.Text;
+            ConsoleWrite.InfoLine(hintedTranslation);
+            string input = Console.ReadLine().Trim();
+            this.OnTranslationSendEvent(this, new TranslationEventArgs(input));
+        }
+
+        private void ExamStrategy_OnExamMessageSend(object sender, MessageEventArgs eventArgs)
+        {
+            Console.WriteLine(eventArgs.Message);
+        }
+
+        private void ExamStrategy_OnTranslationResultSending(object sender, TranslationResultEventArgs resultArgs)
+        {
+            if (resultArgs.IsCorrect)
+            {
+                ConsoleWrite.SuccessLine("That's right!");
+
+                if (this.SelectedTranslationType == Enums.TranslationType.EnglishToBulgarian)
+                {
+                    this.ShowTranslationInfo(resultArgs.AllTranslations);
+                }
+            }
+            else
+            {
+                ConsoleWrite.ErrorLine("Wrong!");
+                this.ShowTranslationInfo(resultArgs.AllTranslations);
+            }      
+        }
+
+        private void ExamStrategy_OnWordForTranslationSending(object sender, TranslationEventArgs eventArgs)
+        {
+            string wordToTranslate = eventArgs.Text;
+
+            Console.WriteLine();
+            string wordIndex = eventArgs.TranslationIndex.HasValue ? eventArgs.TranslationIndex.ToString() : "Translate";
+            Console.WriteLine($"{wordIndex}: {wordToTranslate}:");
+            this.inputTranslation = Console.ReadLine();
+            this.OnTranslationSendEvent(this, new TranslationEventArgs(this.inputTranslation));
+            this.inputTranslation = null;
+        }
+
         private static void PrintTotalWords(int count)
         {
             Console.WriteLine($"Total words in dictionary {count}.");
+        }
+
+        private void ShowTranslationInfo(string[] translationsData)
+        {
+            string message = "All translations:";
+            message += $"{Environment.NewLine}---";
+            message += $"{string.Join($"{Environment.NewLine}---", translationsData)}";
+            ConsoleWrite.InfoLine(message);
         }
     }
 }
