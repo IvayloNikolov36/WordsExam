@@ -29,12 +29,12 @@ public partial class Exam : IEventTranslationSender
         get => this.answer;
         set
         {
+            this.answer = value;
             this.OnTranslationSendEvent(this, new TranslationEventArgs(value));
-            this.answer = string.Empty;
         }
     }
 
-    protected string? AllTranslations { get; private set; }
+    protected string[]? AllTranslations { get; private set; } = null;
 
     protected override void OnInitialized()
     {
@@ -126,7 +126,7 @@ public partial class Exam : IEventTranslationSender
         {
             this.isRight = resultArgs.IsCorrect;
             this.hints = null;
-            this.AllTranslations = string.Join(Environment.NewLine, resultArgs.AllTranslations);
+            this.AllTranslations = resultArgs.AllTranslations;
             StateHasChanged();
         });
     }
@@ -147,6 +147,7 @@ public partial class Exam : IEventTranslationSender
         await InvokeAsync(() =>
         {
             this.Question = wordToTranslate;
+            this.answer = null;
             this.AllTranslations = null;
             this.isRight = null;
             StateHasChanged();
