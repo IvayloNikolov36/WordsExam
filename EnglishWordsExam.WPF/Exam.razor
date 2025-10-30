@@ -45,7 +45,7 @@
             <div class="mb-3">
                 <label for="answerArea" class="form-label">Answer:</label>
                 <input type="text" @bind="Answer" @bind:event="onchange" class="form-control" id="answerArea" />
-                @if (hints == null)
+                @if (hints == null && !isRight.HasValue)
                 {
                     <div class="mt-2">
                         <span class="text-info" @onclick="OnHintRequired">Need a hint?</span>
