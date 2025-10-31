@@ -1,27 +1,30 @@
 ﻿using EnglishWordsExam.Exceptions;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace EnglishWordsExam.Utilities;
 
 public static class ExamUtiliser
 {
-    public static string GetTranslationHints(string[] translations, int symbolsToReveal)
+    public static IEnumerable<string> GetTranslationHints(
+        string[] translations,
+        int symbolsToReveal)
     {
-        StringBuilder hints = new();
+        Queue<string> tokens = new();
 
         foreach (string word in translations)
         {
-            string visiblePart = new string(word.Take(symbolsToReveal).ToArray());
-            hints.Append(visiblePart);
+            string hint = string.Empty;
+
+            string revealedWordPart = new([.. word.Take(symbolsToReveal)]);
+            hint += revealedWordPart;
 
             IEnumerable<char> symbolsToConceal = word
                 .Skip(symbolsToReveal)
                 .Take(word.Length - symbolsToReveal);
 
-            char[] concealed = symbolsToConceal
+            char[] concealed = [.. symbolsToConceal
                 .Select(symbol =>
                 {
                     if (symbol == ' ')
@@ -31,13 +34,18 @@ public static class ExamUtiliser
 
                     return Constants.HintMaskSymbol;
                 })
-                .ToArray();
+            ];
 
-            hints.Append(new string(concealed));
-            hints.AppendLine($". ({word.Length}) symbols.");
+            string concealedWordPart = new(concealed);
+            hint += concealedWordPart;
+
+            string wordSuffix = $". ({word.Length}) symbols.";
+            hint += wordSuffix;
+
+            tokens.Enqueue(hint);
         }
 
-        return hints.ToString();
+        return tokens;
     }
 
     public static List<string> CompileAllTranslations(string[] translations)

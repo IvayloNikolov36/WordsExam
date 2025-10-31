@@ -7,6 +7,7 @@ using EnglishWordsExam.Strategies;
 using EnglishWordsExam.Strategies.Contracts;
 using EnglishWordsExam.Utilities;
 using System;
+using System.Linq;
 
 namespace EnglishWordsExam
 {
@@ -73,10 +74,10 @@ namespace EnglishWordsExam
             ConsoleWrite.InfoLine(message);
         }
 
-        private void ExamStrategy_OnTranslationHintsSending(object sender, TranslationEventArgs eventArgs)
+        private void ExamStrategy_OnTranslationHintsSending(object sender, TranslationHintsEventArgs eventArgs)
         {
-            string hintedTranslation = eventArgs.Text;
-            ConsoleWrite.InfoLine(hintedTranslation);
+            string[] hintedTranslation = eventArgs.TranslationTokens.ToArray();
+            ConsoleWrite.InfoLine(string.Join(Environment.NewLine, hintedTranslation));
             string input = Console.ReadLine().Trim();
             this.OnTranslationSendEvent(this, new TranslationEventArgs(input));
         }

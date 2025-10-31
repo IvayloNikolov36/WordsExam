@@ -16,7 +16,7 @@ namespace EnglishWordsExam.Strategies
         private const int DefaultSupplementaryExamRounds = 0;
         private const string TranslationProcessException = "An exception occurred, so your answer would be accepted as true.";
 
-        public event OnTranslationSendEventHandler OnWordForTranslationSending;
+        public event OnWordForTranslationSendEventHandler OnWordForTranslationSending;
         public event OnTranslationResultSendEventHandler OnTranslationResultSending;
         public event OnTranslationHintsSendEventHandler OnTranslationHintsSending;
         public event OnExamMessageSendEventHandler OnExamMessageSend;
@@ -81,9 +81,11 @@ namespace EnglishWordsExam.Strategies
                 bool needsHint = this.IsHintCommand(inputTranslation);
                 if (needsHint)
                 {
-                    string translationHints = ExamUtiliser.GetTranslationHints(translationsData, Constants.SymbolsToReveal);
+                    IEnumerable<string> translationHints = ExamUtiliser.GetTranslationHints(
+                        translationsData,
+                        Constants.SymbolsToReveal);
 
-                    this.OnTranslationHintsSending(this, new TranslationEventArgs(translationHints));
+                    this.OnTranslationHintsSending(this, new TranslationHintsEventArgs(translationHints));
 
                     hintedWordsIndexes.Add(wordIndex);
 

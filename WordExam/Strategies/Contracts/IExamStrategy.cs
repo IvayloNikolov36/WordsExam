@@ -7,7 +7,7 @@ namespace EnglishWordsExam.Strategies.Contracts;
 
 public interface IExamStrategy
 {
-    event OnTranslationSendEventHandler OnWordForTranslationSending;
+    event OnWordForTranslationSendEventHandler OnWordForTranslationSending;
     event OnTranslationResultSendEventHandler OnTranslationResultSending;
     event OnTranslationHintsSendEventHandler OnTranslationHintsSending;
     event OnExamMessageSendEventHandler OnExamMessageSend;
