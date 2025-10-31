@@ -1,4 +1,5 @@
-﻿<div class="container-fluid">
+﻿@using EnglishWordsExam.Enums
+<div class="container-fluid">
 
     @if (!isStarted)
     {
@@ -72,24 +73,28 @@
                 </section>
             </div>
             <div class="col p-5">
-                @if (AllTranslations != null)
+                @if (this.showAllTranslations && this.AllTranslations != null)
                 {
                     <div class="d-flex flex-column">
-                        <span class="fs-4">
-                            <span class="text-info">@WordForTranslation</span> all translations:
-                        </span>
-                        @for (int i = 0; i < AllTranslations.Length; i++)
+                        @if (this.translationType == TranslationType.BulgarianToEnglish)
                         {
-                            <div class="mt-2 ms-2">
-                                @if (AllTranslations[i].Equals(answer))
-                                {
-                                    <span class="text-bg-success">@(i + 1). @AllTranslations[i]</span>
-                                }
-                                else
-                                {
-                                    <span>@(i + 1). @AllTranslations[i]</span>
-                                }
-                            </div>
+                            <span>
+                                The right translation of <span class="text-info">@(WordForTranslation)</span>: @(AllTranslations[0])!
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="fs-4">
+                                <span class="text-info">@WordForTranslation</span> all translations:
+                            </span>
+                            @for (int i = 0; i < AllTranslations.Length; i++)
+                            {
+                                <div class="mt-2 ms-2">
+                                    <span class="@(AllTranslations[i].Equals(answer) ? "text-bg-success" : "")">
+                                        @(i + 1). @AllTranslations[i]
+                                    </span>
+                                </div>
+                            }
                         }
                     </div>
                 }

@@ -22,6 +22,8 @@ public partial class Exam : IEventTranslationSender
     private string? examMessage;
     private bool isStarted = false;
     private bool? isRight = null;
+    private TranslationType translationType;
+    private bool showAllTranslations = false;
 
     protected string? Question { get; private set; }
 
@@ -66,6 +68,8 @@ public partial class Exam : IEventTranslationSender
 
     private async Task StartExam(TranslationType translationType)
     {
+        this.translationType = translationType;
+
         IExamStrategy examStrategy = new SpaciousSupplementaryExamStrategy(this);
 
         examStrategy.OnWordForTranslationSending += ExamStrategy_OnWordForTranslation;
@@ -131,9 +135,20 @@ public partial class Exam : IEventTranslationSender
             this.isRight = resultArgs.IsCorrect;
             this.hints = null;
             this.AllTranslations = resultArgs.AllTranslations;
+            this.showAllTranslations = this.ShowAllTranslations(resultArgs.IsCorrect, this.translationType);
             this.WordForTranslation = this.Question;
             StateHasChanged();
         });
+    }
+
+    private bool ShowAllTranslations(bool isCorrect, TranslationType translationType)
+    {
+        if (translationType == TranslationType.EnglishToBulgarian)
+        {
+            return true;
+        }
+
+        return !isCorrect;
     }
 
     private async void ExamStrategy_OnWordForTranslation(
