@@ -38,13 +38,13 @@
                 <section>
                     <div class="mb-3">
                         <label for="questionArea" class="form-label">Question @(questionNumber) of @(wordsToTranslate):</label>
-                        <input type="text" @bind="Question" @bind:event="onset" class="form-control" id="questionArea" />
+                        <textarea type="text" @bind="Question" @bind:event="onset" class="form-control" id="questionArea" rows="@(questionTextAreaRows)" />
                     </div>
                     @if (!string.IsNullOrEmpty(hints))
                     {
                         <div class="mb-3">
                             <label for="hintsArea" class="form-label">Hints:</label>
-                            <textarea type="text" @bind="hints" @bind:event="onset" class="form-control" id="hintsArea" rows="@(hintsRows)" />
+                            <textarea type="text" @bind="hints" @bind:event="onset" class="form-control" id="hintsArea" rows="@(hintsTextAreaRows)" />
                         </div>
                     }
                     <div class="mb-3">

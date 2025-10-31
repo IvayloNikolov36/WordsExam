@@ -18,7 +18,8 @@ public partial class Exam : IEventTranslationSender
     private int questionNumber;
     private string? answer = null;
     private string? hints = null;
-    private int hintsRows = 1;
+    private int hintsTextAreaRows = 1;
+    private int questionTextAreaRows = 1;
     private string? examMessage;
     private bool isStarted = false;
     private bool? isRight = null;
@@ -106,7 +107,7 @@ public partial class Exam : IEventTranslationSender
     {
         await InvokeAsync(() =>
         {
-            this.hintsRows = eventArgs.TranslationTokens.Count();
+            this.hintsTextAreaRows = eventArgs.TranslationTokens.Count();
             this.hints = string.Join(Environment.NewLine, eventArgs.TranslationTokens);
             StateHasChanged();
         });
@@ -166,6 +167,7 @@ public partial class Exam : IEventTranslationSender
         await InvokeAsync(() =>
         {
             this.Question = wordToTranslate;
+            this.questionTextAreaRows = (int)Math.Ceiling((decimal)this.Question!.Length / 30);
             this.answer = null;
             this.isRight = null;
             StateHasChanged();
