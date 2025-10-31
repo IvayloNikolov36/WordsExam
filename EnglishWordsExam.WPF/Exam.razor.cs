@@ -36,6 +36,8 @@ public partial class Exam : IEventTranslationSender
 
     protected string[]? AllTranslations { get; private set; } = null;
 
+    protected string? WordForTranslation { get; private set; } = null;
+
     protected override void OnInitialized()
     {
         FileReader reader = new(Constants.FilePath);
@@ -127,6 +129,7 @@ public partial class Exam : IEventTranslationSender
             this.isRight = resultArgs.IsCorrect;
             this.hints = null;
             this.AllTranslations = resultArgs.AllTranslations;
+            this.WordForTranslation = this.Question;
             StateHasChanged();
         });
     }
@@ -140,15 +143,13 @@ public partial class Exam : IEventTranslationSender
 
         if (this.questionNumber > 1)
         {
-            int waitFor = this.isRight == true ? 1000 : 3000;
-            await Task.Delay(waitFor);
+            await Task.Delay(1000);
         }
 
         await InvokeAsync(() =>
         {
             this.Question = wordToTranslate;
             this.answer = null;
-            this.AllTranslations = null;
             this.isRight = null;
             StateHasChanged();
         });
