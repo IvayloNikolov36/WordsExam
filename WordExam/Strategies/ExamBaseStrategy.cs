@@ -21,6 +21,7 @@ namespace EnglishWordsExam.Strategies
         public event OnTranslationHintsSendEventHandler OnTranslationHintsSending;
         public event OnExamMessageSendEventHandler OnExamMessageSend;
         public event OnExamCompletedEventHandler OnExamCompleted;
+        public event OnSupplementaryExamStartedEventHandler OnSupplementaryExamStarted;
 
         private string receivedTranslation = null;
 
@@ -148,7 +149,7 @@ namespace EnglishWordsExam.Strategies
             TranslationType translationType)
         {
             IEnumerable<DictionaryWord> wordsPortion = this.GetWordsPortion(examWords, resultWordsIndexes);
- 
+
             this.WordsForSupplementaryExam.AddRange(wordsPortion);
 
             if (this.WordsForSupplementaryExam.Count == 0)
@@ -158,7 +159,9 @@ namespace EnglishWordsExam.Strategies
 
             if (this.SupplementaryExamRounds == 1)
             {
-                this.OnExamMessageSend(this, new MessageEventArgs($"Supplementary exam ({this.WordsForSupplementaryExam.Count} word(s))."));
+                this.OnSupplementaryExamStarted(
+                    this,
+                    new SupplementaryExamEventArgs(1, 1, this.WordsForSupplementaryExam.Count));
 
                 this.WordsForSupplementaryExam.Clear();
 
@@ -176,11 +179,12 @@ namespace EnglishWordsExam.Strategies
                     return;
                 }
 
-                ConsoleWrite.AnnouncementLine(
-                    $"Supplementary exam round {round + 1} ({this.WordsForSupplementaryExam.Count} word(s)).");
+                this.OnSupplementaryExamStarted(
+                    this,
+                    new SupplementaryExamEventArgs(round + 1, this.SupplementaryExamRounds, this.WordsForSupplementaryExam.Count));
 
                 (HashSet<int> hinted, HashSet<int> wrong) = this.Process(
-                    this.WordsForSupplementaryExam.ToArray(),
+                    [.. this.WordsForSupplementaryExam],
                     translationType);
 
                 hintedAndWrongWordIndexes.UnionWith(hinted.Union(wrong));

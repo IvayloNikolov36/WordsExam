@@ -12,6 +12,7 @@ public interface IExamStrategy
     event OnTranslationHintsSendEventHandler OnTranslationHintsSending;
     event OnExamMessageSendEventHandler OnExamMessageSend;
     event OnExamCompletedEventHandler OnExamCompleted;
+    event OnSupplementaryExamStartedEventHandler OnSupplementaryExamStarted;
 
     void ConductExam(IEnumerable<DictionaryWord> examWords, TranslationType translationType);
 }

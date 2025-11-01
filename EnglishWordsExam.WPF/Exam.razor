@@ -29,10 +29,10 @@
     {
         <div class="row">
             <div class="col p-5">
-                @if (examMessage != null)
+                @if (examTitle != null)
                 {
                     <div id="exam-message">
-                        <span class="fs-3 text-info fw-bold">@(examMessage)</span>
+                        <span class="fs-3 text-info fw-bold">@(examTitle)</span>
                     </div>
                 }
                 <section>
@@ -72,6 +72,7 @@
                     </div>
                 </section>
             </div>
+
             <div class="col p-5">
                 @if (this.showAllTranslations && this.AllTranslations != null)
                 {

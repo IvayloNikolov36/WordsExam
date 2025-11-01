@@ -5,6 +5,8 @@ using EnglishWordsExam.EventHandlers.EventArguments;
 using EnglishWordsExam.Models;
 using EnglishWordsExam.Strategies;
 using EnglishWordsExam.Strategies.Contracts;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace WpfBlazor;
 
@@ -20,7 +22,7 @@ public partial class Exam : IEventTranslationSender
     private string? hints = null;
     private int hintsTextAreaRows = 1;
     private int questionTextAreaRows = 1;
-    private string? examMessage;
+    private string examTitle = string.Empty;
     private bool isStarted = false;
     private bool? isRight = null;
     private TranslationType translationType;
@@ -77,6 +79,7 @@ public partial class Exam : IEventTranslationSender
         examStrategy.OnTranslationResultSending += ExamStrategy_OnTranslationResultSending;
         examStrategy.OnTranslationHintsSending += ExamStrategy_OnTranslationHintsSending;
         examStrategy.OnExamMessageSend += ExamStrategy_OnExamMessageSend;
+        examStrategy.OnSupplementaryExamStarted += ExamStrategy_OnSupplementaryExamStarted;
         examStrategy.OnExamCompleted += ExamStrategy_OnExamCompleted;
 
         ExamProcessor exam = new(
@@ -98,9 +101,29 @@ public partial class Exam : IEventTranslationSender
         });
     }
 
+    private async void ExamStrategy_OnSupplementaryExamStarted(
+        object sender,
+        SupplementaryExamEventArgs eventArgs)
+    {
+        await InvokeAsync(() =>
+        {
+            string message = $"Supplementary Exam round {eventArgs.Round}/{eventArgs.RoundsCount} ({eventArgs.WordsCount} words).";
+            if (eventArgs.Round == 1)
+            {
+                this.examTitle += message;
+            }
+            else
+            {
+                this.examTitle = message;
+            }
+            this.wordsToTranslate = eventArgs.WordsCount;
+            this.StateHasChanged();
+        });
+    }
+
     private void ExamStrategy_OnExamMessageSend(object sender, MessageEventArgs eventArgs)
     {
-        this.examMessage = eventArgs.Message;
+        this.examTitle = eventArgs.Message;
     }
 
     private async void ExamStrategy_OnTranslationHintsSending(object sender, TranslationHintsEventArgs eventArgs)
@@ -113,18 +136,24 @@ public partial class Exam : IEventTranslationSender
         });
     }
 
-    private void ExamStrategy_OnExamCompleted(object sender, ExamComplitionEventArgs eventArgs)
+    private async void ExamStrategy_OnExamCompleted(object sender, ExamComplitionEventArgs eventArgs)
     {
-        int correct = eventArgs.CorrectWordsCount;
-        int total = eventArgs.TotalWordsCount;
-
-        if (correct == total)
+        await InvokeAsync(() =>
         {
-            this.examMessage = "You have completed the exam. Congratulations!";
-            return;
-        }
+            int correct = eventArgs.CorrectWordsCount;
+            int total = eventArgs.TotalWordsCount;
 
-        this.examMessage = $"Correct: {eventArgs.CorrectWordsCount} of {eventArgs.TotalWordsCount}.";
+            if (correct == total)
+            {
+                this.examTitle = "You have completed the exam. Congratulations!";
+            }
+            else
+            {
+                this.examTitle = $"Correct translations: {eventArgs.CorrectWordsCount}/{eventArgs.TotalWordsCount}.";
+            }
+
+            this.StateHasChanged();
+        });
     }
 
     private async void ExamStrategy_OnTranslationResultSending(
