@@ -46,6 +46,7 @@ namespace EnglishWordsExam
                 examStrategy.OnTranslationResultSending += ExamStrategy_OnTranslationResultSending;
                 examStrategy.OnExamMessageSend += ExamStrategy_OnExamMessageSend;
                 examStrategy.OnTranslationHintsSending += ExamStrategy_OnTranslationHintsSending;
+                examStrategy.OnSupplementaryExamStarted += ExamStrategy_OnSupplementaryExamStarted;
                 examStrategy.OnExamCompleted += ExamStrategy_OnExamCompleted;
 
                 ExamProcessor exam = new(
@@ -66,6 +67,12 @@ namespace EnglishWordsExam
                     Environment.Exit(0);
                 }
             }
+        }
+
+        private void ExamStrategy_OnSupplementaryExamStarted(object sender, SupplementaryExamEventArgs eventArgs)
+        {
+            ConsoleWrite.AnnouncementLine(
+                $"Supplementary exam round {eventArgs.Round}/{eventArgs.RoundsCount} ({eventArgs.WordsCount} word(s)).");
         }
 
         private void ExamStrategy_OnExamCompleted(object sender, ExamComplitionEventArgs eventArgs)
