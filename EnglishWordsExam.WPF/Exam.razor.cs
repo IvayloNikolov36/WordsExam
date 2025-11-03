@@ -5,14 +5,12 @@ using EnglishWordsExam.EventHandlers.EventArguments;
 using EnglishWordsExam.Models;
 using EnglishWordsExam.Strategies;
 using EnglishWordsExam.Strategies.Contracts;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 
 namespace WpfBlazor;
 
 public partial class Exam : IEventTranslationSender
 {
-    public event OnTranslationSendEventHandler OnTranslationSendEvent;
+    public event OnTranslationSendEventHandler OnTranslationSendEvent = default!;
 
     private int totalWordsCount;
     private int wordsToTranslate;
@@ -46,7 +44,7 @@ public partial class Exam : IEventTranslationSender
 
     protected override void OnInitialized()
     {
-        FileReader reader = new(Constants.FilePath);
+        FileReader reader = new(@"../../../assets/words.txt");
         LoadWordsResult wordsResult = reader.LoadWords();
         this.words = wordsResult.Words;
         this.totalWordsCount = wordsResult.WordsCount;
