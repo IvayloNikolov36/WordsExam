@@ -87,36 +87,29 @@ public partial class Exam : IEventTranslationSender
             examStrategy
         );
 
-        await InvokeAsync(() =>
-        {
-            this.isStarted = true;
-            this.StateHasChanged();
-        });
+        this.isStarted = true;
+        await InvokeAsync(this.StateHasChanged);
 
-        await Task.Run(() =>
-        {
-            exam.Start();
-        });
+        await Task.Run(() => exam.Start());
     }
 
     private async void ExamStrategy_OnSupplementaryExamStarted(
         object sender,
         SupplementaryExamEventArgs eventArgs)
     {
-        await InvokeAsync(() =>
+        string message = $"Supplementary Exam round {eventArgs.Round}/{eventArgs.RoundsCount} ({eventArgs.WordsCount} words).";
+        if (eventArgs.Round == 1)
         {
-            string message = $"Supplementary Exam round {eventArgs.Round}/{eventArgs.RoundsCount} ({eventArgs.WordsCount} words).";
-            if (eventArgs.Round == 1)
-            {
-                this.examTitle += message;
-            }
-            else
-            {
-                this.examTitle = message;
-            }
-            this.wordsToTranslate = eventArgs.WordsCount;
-            this.StateHasChanged();
-        });
+            this.examTitle += message;
+        }
+        else
+        {
+            this.examTitle = message;
+        }
+
+        this.wordsToTranslate = eventArgs.WordsCount;
+
+        await InvokeAsync(this.StateHasChanged);
     }
 
     private void ExamStrategy_OnExamMessageSend(object sender, MessageEventArgs eventArgs)

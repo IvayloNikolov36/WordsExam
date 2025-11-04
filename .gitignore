@@ -350,3 +350,4 @@ MigrationBackup/
 .ionide/
 /JobFinder.Web/appsettings.json
 EnglishWordsExam.WPF/wwwroot/css/bootstrap/bootstrap.min.css
+EnglishWordsExam.WPF/Assets/Output/

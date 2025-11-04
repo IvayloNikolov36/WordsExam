@@ -2,6 +2,7 @@
 using EnglishWordsExam.EventHandlers;
 using EnglishWordsExam.Models;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace EnglishWordsExam.Strategies
 {
@@ -22,13 +23,15 @@ namespace EnglishWordsExam.Strategies
 
         protected override int SupplementaryExamRounds => DefaultSupplementaryExamRounds;
 
-        public override void ConductExam(
-            IEnumerable<DictionaryWord> examWords,
-            TranslationType translationType)
+        public override async Task ConductExam(IEnumerable<DictionaryWord> words, TranslationType translationType)
         {
-            (_, HashSet<int> wrongTranslatedWords) = this.Process(examWords, translationType);
+            ExamProcessResult result = this.Process(words, translationType);
 
-            this.ProcessSupplementaryExam(examWords, wrongTranslatedWords, translationType);
+            IEnumerable<DictionaryWord> examWords = this.GetWordsPortion(words, result.WrongWords);
+
+            await this.SaveWordsToFile(examWords, translationType);
+
+            await this.ProcessSupplementaryExam(examWords, translationType);
         }
     }
 }

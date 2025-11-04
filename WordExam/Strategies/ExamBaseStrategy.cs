@@ -7,7 +7,10 @@ using EnglishWordsExam.Strategies.Contracts;
 using EnglishWordsExam.Utilities;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace EnglishWordsExam.Strategies
 {
@@ -40,11 +43,11 @@ namespace EnglishWordsExam.Strategies
 
         protected virtual int SupplementaryExamRounds { get; } = DefaultSupplementaryExamRounds;
 
-        public abstract void ConductExam(
+        public abstract Task ConductExam(
             IEnumerable<DictionaryWord> examWords,
             TranslationType translationType);
 
-        protected (HashSet<int> hintedWords, HashSet<int> wrongTranslatedWords) Process(
+        protected ExamProcessResult Process(
             IEnumerable<DictionaryWord> examWords,
             TranslationType translationType)
         {
@@ -140,17 +143,12 @@ namespace EnglishWordsExam.Strategies
 
             this.OnExamCompleted(this, new ExamComplitionEventArgs(correctlyTranslated, wordIndex + 1));
 
-            return (hintedWordsIndexes, wrongTranslatedWordsIndexes);
+            return new ExamProcessResult(hintedWordsIndexes, wrongTranslatedWordsIndexes);
         }
 
-        protected void ProcessSupplementaryExam(
-            IEnumerable<DictionaryWord> examWords,
-            HashSet<int> resultWordsIndexes,
-            TranslationType translationType)
+        protected async Task ProcessSupplementaryExam(IEnumerable<DictionaryWord> words, TranslationType translationType)
         {
-            IEnumerable<DictionaryWord> wordsPortion = this.GetWordsPortion(examWords, resultWordsIndexes);
-
-            this.WordsForSupplementaryExam.AddRange(wordsPortion);
+            this.WordsForSupplementaryExam.AddRange(words);
 
             if (this.WordsForSupplementaryExam.Count == 0)
             {
@@ -165,7 +163,7 @@ namespace EnglishWordsExam.Strategies
 
                 this.WordsForSupplementaryExam.Clear();
 
-                this.ConductExam(wordsPortion, translationType);
+                await this.ConductExam(words, translationType);
 
                 return;
             }
@@ -183,11 +181,12 @@ namespace EnglishWordsExam.Strategies
                     this,
                     new SupplementaryExamEventArgs(round + 1, this.SupplementaryExamRounds, this.WordsForSupplementaryExam.Count));
 
-                (HashSet<int> hinted, HashSet<int> wrong) = this.Process(
+                ExamProcessResult result = this.Process(
                     [.. this.WordsForSupplementaryExam],
-                    translationType);
+                    translationType
+                );
 
-                hintedAndWrongWordIndexes.UnionWith(hinted.Union(wrong));
+                hintedAndWrongWordIndexes.UnionWith(result.HintedWords.Union(result.WrongWords));
             }
 
             if (hintedAndWrongWordIndexes.Count == 0)
@@ -196,13 +195,41 @@ namespace EnglishWordsExam.Strategies
             }
 
             this.WordsForSupplementaryExam.Clear();
-            this.ProcessSupplementaryExam(wordsPortion, hintedAndWrongWordIndexes, translationType);
+
+            IEnumerable<DictionaryWord> wordsPortion = this.GetWordsPortion(words, hintedAndWrongWordIndexes);
+
+            await this.ProcessSupplementaryExam(wordsPortion, translationType);
         }
 
         protected bool IsHintCommand(string command)
         {
             return command == Constants.HintCommand
                 || command == Constants.HintCommandCyrilic;
+        }
+
+        protected IEnumerable<DictionaryWord> GetWordsPortion(
+            IEnumerable<DictionaryWord> words,
+            HashSet<int> wordsIndexes)
+        {
+            return words
+                .Where((word, index) => wordsIndexes.Contains(index));
+        }
+
+        protected async Task SaveWordsToFile(IEnumerable<DictionaryWord> words, TranslationType translationType)
+        {
+            IEnumerable<string> examWords = words.Select(w => w.Word);
+
+            WrongWordsReport report = new()
+            {
+                TranslationType = translationType,
+                Words = examWords
+            };
+
+            string reportJson = JsonSerializer.Serialize(report);
+
+            string fileName = @$"../../../Assets/Output/wrong_{Guid.NewGuid()}_{DateTime.Now:dd-MM-yyyy}.json";
+
+            await File.WriteAllTextAsync(fileName, reportJson);
         }
 
         private bool IsGivenTranslationRight(
@@ -227,14 +254,6 @@ namespace EnglishWordsExam.Strategies
             }
 
             return translationsData[0] == givenTranslation;
-        }
-
-        private IEnumerable<DictionaryWord> GetWordsPortion(
-            IEnumerable<DictionaryWord> examWords,
-            HashSet<int> wordsIndexes)
-        {
-            return examWords
-                .Where((word, index) => wordsIndexes.Contains(index));
         }
 
         private void EventTranslation_OnTranslationEvent(object sender, TranslationEventArgs translation)

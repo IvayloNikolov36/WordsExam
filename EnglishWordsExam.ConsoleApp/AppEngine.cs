@@ -24,14 +24,13 @@ public class AppEngine : IEventTranslationSender
 
     public TranslationType SelectedTranslationType { get; private set; }
 
-    public void Run()
+    public async Task Run()
     {
         LoadWordsResult wordsResult = reader.LoadWords();
 
         PrintTotalWords(wordsResult.WordsCount);
 
-        bool newTurn = true;
-        while (newTurn)
+        while (true)
         {
             int wordsCountForTranslation = ConsoleInputParser
                 .GetWordsCountForTranslation(wordsResult.WordsCount);
@@ -54,7 +53,10 @@ public class AppEngine : IEventTranslationSender
                 examStrategy
             );
 
-            exam.Start();
+            ConsoleWrite
+                .InfoLine($"Input {Constants.HintCommand}/{Constants.HintCommandCyrilic} for a help.");
+
+            await exam.Start();
 
             ConsoleWrite
                 .AnnouncementLine("If you want to proceed with another exam, input new. (Every other input will terminate the program");

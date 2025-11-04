@@ -3,6 +3,7 @@ using EnglishWordsExam.Models;
 using EnglishWordsExam.Strategies.Contracts;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using static EnglishWordsExam.Constants;
 
 namespace EnglishWordsExam
@@ -26,15 +27,13 @@ namespace EnglishWordsExam
             this.examStrategy = examStrategy;
         }
 
-        public void Start()
+        public async Task Start()
         {
-            Console.WriteLine($"Input {HintCommand}/{HintCommandCyrilic} for a help.");
-
             IEnumerable<DictionaryWord> examWords = Random
                 .Shared
                 .GetItems(this.words, this.wordsToTranslate);
 
-            this.examStrategy.ConductExam(examWords, this.translationType);
+            await this.examStrategy.ConductExam(examWords, this.translationType);
         }
     }
 }

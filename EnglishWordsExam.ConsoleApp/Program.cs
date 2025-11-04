@@ -7,4 +7,4 @@ Console.InputEncoding = Encoding.Unicode;
 
 IReader reader = new FileReader(@"../../../assets/words.txt");
 AppEngine engine = new(reader);
-engine.Run();
+await engine.Run();
