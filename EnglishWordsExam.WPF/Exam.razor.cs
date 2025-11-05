@@ -2,9 +2,9 @@
 using EnglishWordsExam.Enums;
 using EnglishWordsExam.EventHandlers;
 using EnglishWordsExam.EventHandlers.EventArguments;
-using EnglishWordsExam.Models;
 using EnglishWordsExam.Strategies;
 using EnglishWordsExam.Strategies.Contracts;
+using WpfBlazor.Models;
 
 namespace WpfBlazor;
 
@@ -12,9 +12,7 @@ public partial class Exam : IEventTranslationSender
 {
     public event EventHandler<TranslationEventArgs>? OnTranslationSendEvent;
 
-    private int totalWordsCount;
     private int wordsToTranslate;
-    private IEnumerable<DictionaryWord> words = [];
     private int questionNumber;
     private string? answer = null;
     private string? hints = null;
@@ -44,32 +42,22 @@ public partial class Exam : IEventTranslationSender
 
     protected override void OnInitialized()
     {
-        FileReader reader = new(@"../../../assets/words.txt");
-        LoadWordsResult wordsResult = reader.LoadWords();
-        this.words = wordsResult.Words;
-        this.totalWordsCount = wordsResult.WordsCount;
     }
 
-    private async Task SelectEnglishToBulgarian()
+    private async Task StartExamWithSelectedParameters(ExamStartParameters parameters)
     {
-        if (this.wordsToTranslate > 0)
-            await this.StartExam(TranslationType.EnglishToBulgarian);
-    }
-
-    private async Task SelectBulgarianToEnglish()
-    {
-        if (this.wordsToTranslate > 0)
-            await this.StartExam(TranslationType.BulgarianToEnglish);
+        await this.StartExam(parameters);
     }
 
     private void OnHintRequired()
     {
-        this.OnTranslationSendEvent(this, new TranslationEventArgs(Constants.HintCommand));
+        this.OnTranslationSendEvent?.Invoke(this, new TranslationEventArgs(Constants.HintCommand));
     }
 
-    private async Task StartExam(TranslationType translationType)
+    private async Task StartExam(ExamStartParameters parameters)
     {
-        this.translationType = translationType;
+        this.translationType = parameters.TranslationType;
+        this.wordsToTranslate = parameters.WordsToTranslate;
 
         IExamStrategy examStrategy = new SpaciousSupplementaryExamStrategy(this);
 
@@ -81,9 +69,9 @@ public partial class Exam : IEventTranslationSender
         examStrategy.OnExamCompleted += ExamStrategy_OnExamCompleted;
 
         ExamProcessor exam = new(
-            this.words,
-            this.wordsToTranslate,
-            translationType,
+            parameters.Words,
+            parameters.WordsToTranslate,
+            parameters.TranslationType,
             examStrategy
         );
 
