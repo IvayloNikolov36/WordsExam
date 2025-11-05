@@ -28,7 +28,7 @@ namespace EnglishWordsExam.Strategies
             IEnumerable<DictionaryWord> examWords, 
             TranslationType translationType)
         {
-            ExamProcessResult result = this.Process(examWords, translationType);
+            ExamProcessResult result = await this.Process(examWords, translationType);
 
             HashSet<int> wordIndexes = [.. result.HintedWords.Union(result.WrongWords)];
 

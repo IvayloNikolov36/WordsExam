@@ -1,6 +1,9 @@
-﻿namespace EnglishWordsExam.EventHandlers;
+﻿using EnglishWordsExam.EventHandlers.EventArguments;
+using System;
+
+namespace EnglishWordsExam.EventHandlers;
 
 public interface IEventTranslationSender
 {
-    event OnTranslationSendEventHandler OnTranslationSendEvent;
+    event EventHandler<TranslationEventArgs> OnTranslationSendEvent;
 }

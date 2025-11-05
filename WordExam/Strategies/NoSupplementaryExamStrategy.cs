@@ -23,7 +23,7 @@ namespace EnglishWordsExam.Strategies
             IEnumerable<DictionaryWord> examWords, 
             TranslationType translationType)
         {
-            ExamProcessResult result = this.Process(examWords, translationType);
+            ExamProcessResult result = await this.Process(examWords, translationType);
 
             IEnumerable<DictionaryWord> words = this.GetWordsPortion(examWords, result.WrongWords);
 

@@ -13,7 +13,7 @@ public class AppEngine : IEventTranslationSender
 {
     private readonly IReader reader;
 
-    public event OnTranslationSendEventHandler OnTranslationSendEvent = default!;
+    public event EventHandler<TranslationEventArgs>? OnTranslationSendEvent;
 
     private string? inputTranslation = null;
 
@@ -86,7 +86,7 @@ public class AppEngine : IEventTranslationSender
         string[] hintedTranslation = eventArgs.TranslationTokens.ToArray();
         ConsoleWrite.InfoLine(string.Join(Environment.NewLine, hintedTranslation));
         string input = Console.ReadLine()!.Trim();
-        OnTranslationSendEvent(this, new TranslationEventArgs(input));
+        this.OnTranslationSendEvent?.Invoke(this, new TranslationEventArgs(input));
     }
 
     private void ExamStrategy_OnExamMessageSend(object sender, MessageEventArgs eventArgs)
@@ -122,7 +122,7 @@ public class AppEngine : IEventTranslationSender
             : "Translate";
         Console.WriteLine($"{wordIndex}: {wordToTranslate}:");
         inputTranslation = Console.ReadLine();
-        OnTranslationSendEvent(this, new TranslationEventArgs(inputTranslation));
+        this.OnTranslationSendEvent?.Invoke(this, new TranslationEventArgs(inputTranslation));
         inputTranslation = null;
     }
 

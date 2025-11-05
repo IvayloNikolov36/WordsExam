@@ -10,7 +10,7 @@ namespace WpfBlazor;
 
 public partial class Exam : IEventTranslationSender
 {
-    public event OnTranslationSendEventHandler OnTranslationSendEvent = default!;
+    public event EventHandler<TranslationEventArgs>? OnTranslationSendEvent;
 
     private int totalWordsCount;
     private int wordsToTranslate;
@@ -34,7 +34,7 @@ public partial class Exam : IEventTranslationSender
         set
         {
             this.answer = value;
-            this.OnTranslationSendEvent(this, new TranslationEventArgs(value));
+            this.OnTranslationSendEvent?.Invoke(this, new TranslationEventArgs(value));
         }
     }
 

@@ -25,7 +25,7 @@ namespace EnglishWordsExam.Strategies
 
         public override async Task ConductExam(IEnumerable<DictionaryWord> words, TranslationType translationType)
         {
-            ExamProcessResult result = this.Process(words, translationType);
+            ExamProcessResult result = await this.Process(words, translationType);
 
             IEnumerable<DictionaryWord> examWords = this.GetWordsPortion(words, result.WrongWords);
 

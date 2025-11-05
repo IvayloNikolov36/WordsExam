@@ -26,7 +26,7 @@ namespace EnglishWordsExam.Strategies
         public event OnExamCompletedEventHandler OnExamCompleted;
         public event OnSupplementaryExamStartedEventHandler OnSupplementaryExamStarted;
 
-        private string receivedTranslation = null;
+        private readonly IEventTranslationSender eventSender;
 
         protected ExamBaseStrategy()
         {
@@ -36,7 +36,7 @@ namespace EnglishWordsExam.Strategies
         protected ExamBaseStrategy(IEventTranslationSender eventSender)
             : this()
         {
-            eventSender.OnTranslationSendEvent += EventTranslation_OnTranslationEvent;
+            this.eventSender = eventSender;
         }
 
         protected List<DictionaryWord> WordsForSupplementaryExam { get; }
@@ -47,7 +47,7 @@ namespace EnglishWordsExam.Strategies
             IEnumerable<DictionaryWord> examWords,
             TranslationType translationType);
 
-        protected ExamProcessResult Process(
+        protected async Task<ExamProcessResult> Process(
             IEnumerable<DictionaryWord> examWords,
             TranslationType translationType)
         {
@@ -74,13 +74,7 @@ namespace EnglishWordsExam.Strategies
 
                 this.OnWordForTranslationSending(this, new TranslationEventArgs(textToTranslate, wordIndex));
 
-                while (this.receivedTranslation == null)
-                {
-                    continue;
-                }
-
-                string inputTranslation = this.receivedTranslation;
-                this.receivedTranslation = null;
+                string inputTranslation = await this.GetReceivedTranslation();
 
                 bool needsHint = this.IsHintCommand(inputTranslation);
                 if (needsHint)
@@ -93,13 +87,7 @@ namespace EnglishWordsExam.Strategies
 
                     hintedWordsIndexes.Add(wordIndex);
 
-                    while (this.receivedTranslation == null)
-                    {
-                        continue;
-                    }
-
-                    inputTranslation = this.receivedTranslation;
-                    this.receivedTranslation = null;
+                    inputTranslation = await this.GetReceivedTranslation();
                 }
 
                 bool isTranslationRight = true;
@@ -181,7 +169,7 @@ namespace EnglishWordsExam.Strategies
                     this,
                     new SupplementaryExamEventArgs(round + 1, this.SupplementaryExamRounds, this.WordsForSupplementaryExam.Count));
 
-                ExamProcessResult result = this.Process(
+                ExamProcessResult result = await this.Process(
                     [.. this.WordsForSupplementaryExam],
                     translationType
                 );
@@ -256,9 +244,21 @@ namespace EnglishWordsExam.Strategies
             return translationsData[0] == givenTranslation;
         }
 
-        private void EventTranslation_OnTranslationEvent(object sender, TranslationEventArgs translation)
+        private Task<string> GetReceivedTranslation()
         {
-            this.receivedTranslation = translation.Text;
+            TaskCompletionSource<string> tcs = new();
+
+            EventHandler<TranslationEventArgs> callBack = null;
+
+            callBack = (sender, eventArgs) =>
+            {
+                this.eventSender.OnTranslationSendEvent -= callBack;
+                tcs.SetResult(eventArgs.Text);
+            };
+
+            this.eventSender.OnTranslationSendEvent += callBack;
+
+            return tcs.Task;
         }
     }
 }
