@@ -107,47 +107,40 @@ public partial class Exam : IEventTranslationSender
 
     private async void ExamStrategy_OnTranslationHintsSending(object sender, TranslationHintsEventArgs eventArgs)
     {
-        await InvokeAsync(() =>
-        {
-            this.hintsTextAreaRows = eventArgs.TranslationTokens.Count();
-            this.hints = string.Join(Environment.NewLine, eventArgs.TranslationTokens);
-            StateHasChanged();
-        });
+        this.hintsTextAreaRows = eventArgs.TranslationTokens.Count();
+        this.hints = string.Join(Environment.NewLine, eventArgs.TranslationTokens);
+
+        await InvokeAsync(this.StateHasChanged);
     }
 
     private async void ExamStrategy_OnExamCompleted(object sender, ExamComplitionEventArgs eventArgs)
     {
-        await InvokeAsync(() =>
+        int correct = eventArgs.CorrectWordsCount;
+        int total = eventArgs.TotalWordsCount;
+
+        if (correct == total)
         {
-            int correct = eventArgs.CorrectWordsCount;
-            int total = eventArgs.TotalWordsCount;
+            this.examTitle = "You have completed the exam. Congratulations!";
+        }
+        else
+        {
+            this.examTitle = $"Correct translations: {eventArgs.CorrectWordsCount}/{eventArgs.TotalWordsCount}.";
+        }
 
-            if (correct == total)
-            {
-                this.examTitle = "You have completed the exam. Congratulations!";
-            }
-            else
-            {
-                this.examTitle = $"Correct translations: {eventArgs.CorrectWordsCount}/{eventArgs.TotalWordsCount}.";
-            }
-
-            this.StateHasChanged();
-        });
+        await InvokeAsync(this.StateHasChanged);
     }
 
     private async void ExamStrategy_OnTranslationResultSending(
         object sender,
         TranslationResultEventArgs resultArgs)
     {
-        await InvokeAsync(() =>
-        {
-            this.isRight = resultArgs.IsCorrect;
-            this.hints = null;
-            this.AllTranslations = resultArgs.AllTranslations;
-            this.showAllTranslations = this.ShowAllTranslations(resultArgs.IsCorrect, this.translationType);
-            this.WordForTranslation = this.Question;
-            StateHasChanged();
-        });
+        this.isRight = resultArgs.IsCorrect;
+        this.hints = null;
+        this.AllTranslations = resultArgs.AllTranslations;
+        this.showAllTranslations = this.ShowAllTranslations(resultArgs.IsCorrect, this.translationType);
+        this.WordForTranslation = this.Question;
+
+        await InvokeAsync(this.StateHasChanged);
     }
 
     private bool ShowAllTranslations(bool isCorrect, TranslationType translationType)
@@ -172,13 +165,11 @@ public partial class Exam : IEventTranslationSender
             await Task.Delay(1000);
         }
 
-        await InvokeAsync(() =>
-        {
-            this.Question = wordToTranslate;
-            this.questionTextAreaRows = (int)Math.Ceiling((decimal)this.Question!.Length / 30);
-            this.answer = null;
-            this.isRight = null;
-            StateHasChanged();
-        });
+        this.Question = wordToTranslate;
+        this.questionTextAreaRows = (int)Math.Ceiling((decimal)this.Question!.Length / 30);
+        this.answer = null;
+        this.isRight = null;
+
+        await InvokeAsync(this.StateHasChanged);
     }
 }
