@@ -1,0 +1,28 @@
+﻿@using EnglishWordsExam.Enums
+
+@if (TranslationType == TranslationType.BulgarianToEnglish)
+{
+    <p>
+        The right translation of <span class="text-info">@Word</span> is
+        <span class="text-success fw-bold">@Translations![0]</span>
+        not
+        <span class="text-danger fw-bold">@Answer</span>
+    </p>
+}
+else
+{
+    <p>
+        <span class="fs-4">
+            <span class="text-info">@Word</span> all translations:
+        </span>
+        @for (int i = 0; i < Translations?.Length; i++)
+        {
+            <div class="mt-2 ms-2">
+                <span class="@(Translations[i].Equals(Answer) ? "text-bg-success" : "")">
+                    @(i + 1). @Translations[i]
+                </span>
+            </div>
+        }
+    </p>
+
+}

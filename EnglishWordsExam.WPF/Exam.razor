@@ -57,26 +57,11 @@
                 @if (this.showAllTranslations && this.AllTranslations != null)
                 {
                     <div class="d-flex flex-column">
-                        @if (this.translationType == TranslationType.BulgarianToEnglish)
-                        {
-                            <span>
-                                The right translation of <span class="text-info">@(WordForTranslation)</span>: @(AllTranslations[0])!
-                            </span>
-                        }
-                        else
-                        {
-                            <span class="fs-4">
-                                <span class="text-info">@WordForTranslation</span> all translations:
-                            </span>
-                            @for (int i = 0; i < AllTranslations.Length; i++)
-                            {
-                                <div class="mt-2 ms-2">
-                                    <span class="@(AllTranslations[i].Equals(answer) ? "text-bg-success" : "")">
-                                        @(i + 1). @AllTranslations[i]
-                                    </span>
-                                </div>
-                            }
-                        }
+                        <TranslationResult Word="@WordForTranslation"
+                                           Answer="@answerMemo"
+                                           Translations="@AllTranslations"
+                                           TranslationType="@translationType">
+                        </TranslationResult>
                     </div>
                 }
             </div>
