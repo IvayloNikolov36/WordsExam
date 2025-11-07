@@ -9,48 +9,57 @@
     {
         <div class="row">
             <div class="col p-5">
-                @if (examTitle != null)
+                @if (examResult.Length > 0)
                 {
-                    <div id="exam-message">
-                        <span class="fs-3 text-info fw-bold">@(examTitle)</span>
+                    <div id="exam-result-message">
+                        <span class="text-info fw-bold">@(examResult)</span>
                     </div>
                 }
-                <section>
-                    <div class="mb-3">
-                        <label for="questionArea" class="form-label">Question @(questionNumber) of @(wordsToTranslate):</label>
-                        <textarea type="text" @bind="Question" @bind:event="onset" class="form-control" id="questionArea" rows="@(questionTextAreaRows)" />
-                    </div>
-                    @if (!string.IsNullOrEmpty(hints))
+                @if (!examResult.Equals(CompletedExamMessage))
+                {
+                    @if (examTitle.Length > 0)
                     {
-                        <div class="mb-3">
-                            <label for="hintsArea" class="form-label">Hints:</label>
-                            <textarea type="text" @bind="hints" @bind:event="onset" class="form-control" id="hintsArea" rows="@(hintsTextAreaRows)" />
+                        <div id="exam-title-message">
+                            <span class="text-info fw-bold">@(examTitle)</span>
                         </div>
                     }
-                    <div class="mb-3">
-                        <label for="answerArea" class="form-label">Answer:</label>
-                        <input type="text" @bind="Answer" @bind:event="onchange" class="form-control" id="answerArea" />
-                        @if (hints == null && !isRight.HasValue)
+                    <section>
+                        <div class="my-3">
+                            <label for="questionArea" class="form-label">Question @(questionNumber) of @(wordsToTranslate):</label>
+                            <textarea type="text" @bind="Question" @bind:event="onset" class="form-control" id="questionArea" rows="@(questionTextAreaRows)" />
+                        </div>
+                        @if (!string.IsNullOrEmpty(hints))
                         {
-                            <div class="mt-2">
-                                <span class="text-info" @onclick="OnHintRequired">Need a hint?</span>
+                            <div class="mb-3">
+                                <label for="hintsArea" class="form-label">Hints:</label>
+                                <textarea type="text" @bind="hints" @bind:event="onset" class="form-control" id="hintsArea" rows="@(hintsTextAreaRows)" />
                             </div>
                         }
-                        @if (isRight.HasValue)
-                        {
-                            <div class="mt-2 p-2">
-                                @if (isRight.Value)
-                                {
-                                    <span class="text-bg-success">That's right!</span>
-                                }
-                                else
-                                {
-                                    <span class="text-bg-danger">You are wrong!</span>
-                                }
-                            </div>
-                        }
-                    </div>
-                </section>
+                        <div class="mb-3">
+                            <label for="answerArea" class="form-label">Answer:</label>
+                            <input type="text" @bind="Answer" @bind:event="onchange" class="form-control" id="answerArea" />
+                            @if (hints == null && !isRight.HasValue)
+                            {
+                                <div class="mt-2">
+                                    <span class="text-info" @onclick="OnHintRequired">Need a hint?</span>
+                                </div>
+                            }
+                            @if (isRight.HasValue)
+                            {
+                                <div class="mt-2 p-2">
+                                    @if (isRight.Value)
+                                    {
+                                        <span class="text-bg-success">That's right!</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-bg-danger">You are wrong!</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </section>
+                }
             </div>
 
             <div class="col p-5">
@@ -60,8 +69,7 @@
                         <TranslationResult Word="@WordForTranslation"
                                            Answer="@answerMemo"
                                            Translations="@AllTranslations"
-                                           TranslationType="@translationType">
-                        </TranslationResult>
+                                           TranslationType="@translationType" />
                     </div>
                 }
             </div>

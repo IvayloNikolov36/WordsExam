@@ -49,7 +49,8 @@ namespace EnglishWordsExam.Strategies
 
         protected async Task<ExamProcessResult> Process(
             IEnumerable<DictionaryWord> examWords,
-            TranslationType translationType)
+            TranslationType translationType,
+            int? supplementaryExamRound = null)
         {
             HashSet<int> hintedWordsIndexes = [];
             HashSet<int> wrongTranslatedWordsIndexes = [];
@@ -129,7 +130,11 @@ namespace EnglishWordsExam.Strategies
                         : []));
             }
 
-            this.OnExamCompleted(this, new ExamComplitionEventArgs(correctlyTranslated, wordIndex + 1));
+            this.OnExamCompleted(this, new ExamComplitionEventArgs(
+                correctlyTranslated,
+                total: wordIndex + 1,
+                supplementaryExamRound,
+                supplementaryExamRound.HasValue ? this.SupplementaryExamRounds : null));
 
             return new ExamProcessResult(hintedWordsIndexes, wrongTranslatedWordsIndexes);
         }
@@ -171,7 +176,8 @@ namespace EnglishWordsExam.Strategies
 
                 ExamProcessResult result = await this.Process(
                     [.. this.WordsForSupplementaryExam],
-                    translationType
+                    translationType,
+                    supplementaryExamRound: round + 1
                 );
 
                 hintedAndWrongWordIndexes.UnionWith(result.HintedWords.Union(result.WrongWords));

@@ -10,6 +10,8 @@ namespace WpfBlazor;
 
 public partial class Exam : IEventTranslationSender
 {
+    private const string CompletedExamMessage = "You have completed the exam. Congratulations!";
+
     public event EventHandler<TranslationEventArgs>? OnTranslationSendEvent;
 
     private int wordsToTranslate;
@@ -19,6 +21,7 @@ public partial class Exam : IEventTranslationSender
     private string? hints = null;
     private int hintsTextAreaRows = 1;
     private int questionTextAreaRows = 1;
+    private string examResult = string.Empty;
     private string examTitle = string.Empty;
     private bool isStarted = false;
     private bool? isRight = null;
@@ -36,18 +39,15 @@ public partial class Exam : IEventTranslationSender
             if (answer != null)
             {
                 this.answerMemo = value;
+                this.examResult = string.Empty;
                 this.OnTranslationSendEvent?.Invoke(this, new TranslationEventArgs(value));
-            }     
+            }
         }
     }
 
     protected string[]? AllTranslations { get; private set; } = null;
 
     protected string? WordForTranslation { get; private set; } = null;
-
-    protected override void OnInitialized()
-    {
-    }
 
     private async Task StartExamWithSelectedParameters(ExamStartParameters parameters)
     {
@@ -84,15 +84,8 @@ public partial class Exam : IEventTranslationSender
         object sender,
         SupplementaryExamEventArgs eventArgs)
     {
-        string message = $"Supplementary Exam round {eventArgs.Round}/{eventArgs.RoundsCount} ({eventArgs.WordsCount} words).";
-        if (eventArgs.Round == 1)
-        {
-            this.examTitle += message;
-        }
-        else
-        {
-            this.examTitle = message;
-        }
+        string message = $"Supplementary Exam round {eventArgs.Round}/{eventArgs.RoundsCount}";
+        this.examTitle = message;
 
         this.wordsToTranslate = eventArgs.WordsCount;
 
@@ -116,15 +109,14 @@ public partial class Exam : IEventTranslationSender
     {
         int correct = eventArgs.CorrectWordsCount;
         int total = eventArgs.TotalWordsCount;
+        bool allAreCorrect = correct == total;
 
-        if (correct == total)
-        {
-            this.examTitle = "You have completed the exam. Congratulations!";
-        }
-        else
-        {
-            this.examTitle = $"Correct translations: {eventArgs.CorrectWordsCount}/{eventArgs.TotalWordsCount}.";
-        }
+        bool isCompleted = allAreCorrect && eventArgs.SupplementaryExamRound is null
+            || allAreCorrect && eventArgs.SupplementaryExamRound == eventArgs.SupplementaryExamRounds;
+
+        this.examResult = isCompleted
+            ? CompletedExamMessage
+            : $"Correct translations: {eventArgs.CorrectWordsCount}/{eventArgs.TotalWordsCount}.";
 
         await InvokeAsync(this.StateHasChanged);
     }
