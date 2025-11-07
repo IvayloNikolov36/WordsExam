@@ -3,15 +3,19 @@
 
     <div class="d-flex flex-column me-5 mt-2">
         <div class="my-1">
-            <span>Choose words count to translate: @wordsToTranslate</span>
+            <span>Choose words count to translate: @(wordsToTranslate > 0 ? wordsToTranslate : "")</span>
         </div>
-        <input @bind-value="wordsToTranslate"
-               type="range"
-               class="form-range"
-               min="1"
-               max="@totalWordsCount"
-               step="1"
-               id="wordsToTranslate">
+
+        @if (totalWordsCount > 1)
+        {
+            <input @bind-value="wordsToTranslate"
+                   type="range"
+                   class="form-range"
+                   min="1"
+                   max="@totalWordsCount"
+                   step="1"
+                   id="wordsToTranslate">
+        }
     </div>
 
     @if (wordsToTranslate > 0)
