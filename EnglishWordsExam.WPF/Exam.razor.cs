@@ -65,13 +65,7 @@ public partial class Exam : IEventTranslationSender
         this.wordsToTranslate = parameters.WordsToTranslate;
 
         IExamStrategy examStrategy = new SpaciousSupplementaryExamStrategy(this);
-
-        examStrategy.OnWordForTranslationSending += ExamStrategy_OnWordForTranslation;
-        examStrategy.OnTranslationResultSending += ExamStrategy_OnTranslationResultSending;
-        examStrategy.OnTranslationHintsSending += ExamStrategy_OnTranslationHintsSending;
-        examStrategy.OnExamMessageSend += ExamStrategy_OnExamMessageSend;
-        examStrategy.OnSupplementaryExamStarted += ExamStrategy_OnSupplementaryExamStarted;
-        examStrategy.OnExamCompleted += ExamStrategy_OnExamCompleted;
+        this.SubscribeToExamEvents(examStrategy);
 
         ExamProcessor exam = new(
             parameters.Words,
@@ -163,18 +157,29 @@ public partial class Exam : IEventTranslationSender
         TranslationEventArgs eventArgs)
     {
         string wordToTranslate = eventArgs.Text;
-        this.questionNumber = eventArgs.TranslationIndex!.Value + 1;
+        int questionNumber = eventArgs.TranslationIndex!.Value + 1;
 
-        if (this.questionNumber > 1)
+        if (questionNumber > 1)
         {
             await Task.Delay(1000);
         }
 
+        this.questionNumber = questionNumber;
         this.Question = wordToTranslate;
         this.questionTextAreaRows = (int)Math.Ceiling((decimal)this.Question!.Length / 30);
         this.Answer = null;
         this.isRight = null;
 
         await InvokeAsync(this.StateHasChanged);
+    }
+
+    private void SubscribeToExamEvents(IExamStrategy examStrategy)
+    {
+        examStrategy.OnWordForTranslationSending += ExamStrategy_OnWordForTranslation;
+        examStrategy.OnTranslationResultSending += ExamStrategy_OnTranslationResultSending;
+        examStrategy.OnTranslationHintsSending += ExamStrategy_OnTranslationHintsSending;
+        examStrategy.OnExamMessageSend += ExamStrategy_OnExamMessageSend;
+        examStrategy.OnSupplementaryExamStarted += ExamStrategy_OnSupplementaryExamStarted;
+        examStrategy.OnExamCompleted += ExamStrategy_OnExamCompleted;
     }
 }
