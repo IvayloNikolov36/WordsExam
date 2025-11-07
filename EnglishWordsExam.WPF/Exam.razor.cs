@@ -142,16 +142,6 @@ public partial class Exam : IEventTranslationSender
         await InvokeAsync(this.StateHasChanged);
     }
 
-    private bool ShowAllTranslations(bool isCorrect, TranslationType translationType)
-    {
-        if (translationType == TranslationType.EnglishToBulgarian)
-        {
-            return true;
-        }
-
-        return !isCorrect;
-    }
-
     private async void ExamStrategy_OnWordForTranslation(
         object sender,
         TranslationEventArgs eventArgs)
@@ -166,7 +156,7 @@ public partial class Exam : IEventTranslationSender
 
         this.questionNumber = questionNumber;
         this.Question = wordToTranslate;
-        this.questionTextAreaRows = (int)Math.Ceiling((decimal)this.Question!.Length / 30);
+        this.questionTextAreaRows = this.CalculateQuestionTextAreaRowsCount(this.Question.Length);
         this.Answer = null;
         this.isRight = null;
 
@@ -181,5 +171,22 @@ public partial class Exam : IEventTranslationSender
         examStrategy.OnExamMessageSend += ExamStrategy_OnExamMessageSend;
         examStrategy.OnSupplementaryExamStarted += ExamStrategy_OnSupplementaryExamStarted;
         examStrategy.OnExamCompleted += ExamStrategy_OnExamCompleted;
+    }
+
+    private bool ShowAllTranslations(bool isCorrect, TranslationType translationType)
+    {
+        if (translationType == TranslationType.EnglishToBulgarian)
+        {
+            return true;
+        }
+
+        return !isCorrect;
+    }
+
+    private int CalculateQuestionTextAreaRowsCount(int questionLength)
+    {
+        const int symbolsOnRow = 30;
+
+        return (int)Math.Ceiling((decimal)questionLength / symbolsOnRow);
     }
 }
