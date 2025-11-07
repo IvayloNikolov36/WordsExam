@@ -67,9 +67,9 @@ public partial class Exam : IEventTranslationSender
         IExamStrategy examStrategy = new SpaciousSupplementaryExamStrategy(this);
         this.SubscribeToExamEvents(examStrategy);
 
+        WordsSelector selector = new(parameters.Words, parameters.WordsToTranslate);
         ExamProcessor exam = new(
-            parameters.Words,
-            parameters.WordsToTranslate,
+            selector.GetWords(),
             parameters.TranslationType,
             examStrategy
         );

@@ -46,9 +46,10 @@ public class AppEngine : IEventTranslationSender
             examStrategy.OnSupplementaryExamStarted += ExamStrategy_OnSupplementaryExamStarted;
             examStrategy.OnExamCompleted += ExamStrategy_OnExamCompleted;
 
+            WordsSelector selector = new(wordsResult.Words, wordsCountForTranslation);
+
             ExamProcessor exam = new(
-                wordsResult.Words,
-                wordsCountForTranslation,
+                selectedWords: selector.GetWords(),
                 SelectedTranslationType,
                 examStrategy
             );
