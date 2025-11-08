@@ -1,7 +1,7 @@
 ﻿@using EnglishWordsExam.Enums
 <div class="container-fluid">
 
-    @if (!isStarted)
+    @if (!inProgress)
     {
         <ExamStart SelectedExamParameters="StartExamWithSelectedParameters" />
     }
@@ -14,7 +14,15 @@
                     <div id="exam-result-message">
                         <span class="text-info fw-bold">@(examResult)</span>
                     </div>
+                    @if (examResult.Equals(CompletedExamMessage))
+                    {
+                        <button class="btn btn-primary mt-2"
+                                @onclick="() => { inProgress = false; examResult = string.Empty; }">
+                            Start new Exam
+                        </button>
+                    }
                 }
+
                 @if (!examResult.Equals(CompletedExamMessage))
                 {
                     @if (examTitle.Length > 0)

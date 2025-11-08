@@ -23,7 +23,7 @@ public partial class Exam : IEventTranslationSender
     private int questionTextAreaRows = 1;
     private string examResult = string.Empty;
     private string examTitle = string.Empty;
-    private bool isStarted = false;
+    private bool inProgress = false;
     private bool? isRight = null;
     private TranslationType translationType;
     private bool showAllTranslations = false;
@@ -74,7 +74,7 @@ public partial class Exam : IEventTranslationSender
             examStrategy
         );
 
-        this.isStarted = true;
+        this.inProgress = true;
         await InvokeAsync(this.StateHasChanged);
 
         await Task.Run(() => exam.Start());
