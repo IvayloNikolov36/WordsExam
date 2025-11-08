@@ -18,8 +18,7 @@ public partial class Exam : IEventTranslationSender
     private int questionNumber;
     private string? answer = null;
     private string? answerMemo = null;
-    private string? hints = null;
-    private int hintsTextAreaRows = 1;
+    private string[]? hints = null;
     private int questionTextAreaRows = 1;
     private string examResult = string.Empty;
     private string examTitle = string.Empty;
@@ -52,11 +51,6 @@ public partial class Exam : IEventTranslationSender
     private async Task StartExamWithSelectedParameters(ExamStartParameters parameters)
     {
         await this.StartExam(parameters);
-    }
-
-    private void OnHintRequired()
-    {
-        this.OnTranslationSendEvent?.Invoke(this, new TranslationEventArgs(Constants.HintCommand));
     }
 
     private async Task StartExam(ExamStartParameters parameters)
@@ -97,11 +91,14 @@ public partial class Exam : IEventTranslationSender
         this.examTitle = eventArgs.Message;
     }
 
-    private async void ExamStrategy_OnTranslationHintsSending(object sender, TranslationHintsEventArgs eventArgs)
+    private void HintsNeededHandler()
     {
-        this.hintsTextAreaRows = eventArgs.TranslationTokens.Count();
-        this.hints = string.Join(Environment.NewLine, eventArgs.TranslationTokens);
+        this.OnTranslationSendEvent?.Invoke(this, new TranslationEventArgs(Constants.HintCommand));
+    }
 
+    private async void ExamStrategy_OnTranslationHintsSend(object sender, TranslationHintsEventArgs eventArgs)
+    {
+        this.hints = eventArgs.TranslationTokens.ToArray();
         await InvokeAsync(this.StateHasChanged);
     }
 
@@ -121,7 +118,7 @@ public partial class Exam : IEventTranslationSender
         await InvokeAsync(this.StateHasChanged);
     }
 
-    private async void ExamStrategy_OnTranslationResultSending(
+    private async void ExamStrategy_OnTranslationResultSend(
         object sender,
         TranslationResultEventArgs resultArgs)
     {
@@ -134,7 +131,7 @@ public partial class Exam : IEventTranslationSender
         await InvokeAsync(this.StateHasChanged);
     }
 
-    private async void ExamStrategy_OnWordForTranslation(
+    private async void ExamStrategy_OnWordForTranslationSend(
         object sender,
         TranslationEventArgs eventArgs)
     {
@@ -150,6 +147,7 @@ public partial class Exam : IEventTranslationSender
         this.Question = wordToTranslate;
         this.questionTextAreaRows = this.CalculateQuestionTextAreaRowsCount(this.Question.Length);
         this.Answer = null;
+        this.hints = null;
         this.isRight = null;
 
         await InvokeAsync(this.StateHasChanged);
@@ -157,9 +155,9 @@ public partial class Exam : IEventTranslationSender
 
     private void SubscribeToExamEvents(IExamStrategy examStrategy)
     {
-        examStrategy.OnWordForTranslationSending += ExamStrategy_OnWordForTranslation;
-        examStrategy.OnTranslationResultSending += ExamStrategy_OnTranslationResultSending;
-        examStrategy.OnTranslationHintsSending += ExamStrategy_OnTranslationHintsSending;
+        examStrategy.OnWordForTranslationSending += ExamStrategy_OnWordForTranslationSend;
+        examStrategy.OnTranslationResultSending += ExamStrategy_OnTranslationResultSend;
+        examStrategy.OnTranslationHintsSending += ExamStrategy_OnTranslationHintsSend;
         examStrategy.OnExamMessageSend += ExamStrategy_OnExamMessageSend;
         examStrategy.OnSupplementaryExamStarted += ExamStrategy_OnSupplementaryExamStarted;
         examStrategy.OnExamCompleted += ExamStrategy_OnExamCompleted;

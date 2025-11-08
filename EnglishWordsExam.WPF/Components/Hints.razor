@@ -1,0 +1,13 @@
+﻿@if (showHintsTextArea)
+{
+    <div class="mb-3">
+        <label for="hintsArea" class="form-label">Hints:</label>
+        <textarea type="text" @bind="hintsText" class="form-control" id="hintsArea" rows="@(hintsTextAreaRows)" />
+    </div>
+}
+else
+{
+    <div class="mt-2">
+        <span class="text-info" @onclick="OnHintRequired">Need a hint?</span>
+    </div>
+}

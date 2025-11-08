@@ -36,22 +36,10 @@
                             <label for="questionArea" class="form-label">Question @(questionNumber) of @(wordsToTranslate):</label>
                             <textarea type="text" @bind="Question" @bind:event="onset" class="form-control" id="questionArea" rows="@(questionTextAreaRows)" />
                         </div>
-                        @if (!string.IsNullOrEmpty(hints))
-                        {
-                            <div class="mb-3">
-                                <label for="hintsArea" class="form-label">Hints:</label>
-                                <textarea type="text" @bind="hints" @bind:event="onset" class="form-control" id="hintsArea" rows="@(hintsTextAreaRows)" />
-                            </div>
-                        }
+
                         <div class="mb-3">
                             <label for="answerArea" class="form-label">Answer:</label>
                             <input type="text" @bind="Answer" @bind:event="onchange" class="form-control" id="answerArea" />
-                            @if (hints == null && !isRight.HasValue)
-                            {
-                                <div class="mt-2">
-                                    <span class="text-info" @onclick="OnHintRequired">Need a hint?</span>
-                                </div>
-                            }
                             @if (isRight.HasValue)
                             {
                                 <div class="mt-2 p-2">
@@ -66,6 +54,11 @@
                                 </div>
                             }
                         </div>
+
+                        <div class="mt-2">
+                            <Hints HintsTokens="@hints" HintsNeeded="HintsNeededHandler" />
+                        </div>
+
                     </section>
                 }
             </div>
