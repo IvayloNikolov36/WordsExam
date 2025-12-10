@@ -1,14 +1,15 @@
 ﻿@using EnglishWordsExam.Enums
 
-@if (Translations is not null)
+@if (Translations != null && Translations.Length > 0)
 {
     @if (TranslationType == TranslationType.BulgarianToEnglish)
     {
         <p>
             The right translation of <span class="text-info fw-bold">@Word</span> is
+            <br />
             <span class="text-success fw-bold">@Translations![0]</span>
-            not
-            <span class="text-danger fw-bold">@Answer</span>
+            <br />
+            not <span class="text-danger fw-bold">@Answer</span>
         </p>
     }
     else

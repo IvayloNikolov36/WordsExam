@@ -138,17 +138,11 @@ public partial class Exam : IEventTranslationSender
         string wordToTranslate = eventArgs.Text;
         int questionNumber = eventArgs.TranslationIndex!.Value + 1;
 
-        if (questionNumber > 1)
-        {
-            await Task.Delay(1000);
-        }
-
         this.questionNumber = questionNumber;
         this.Question = wordToTranslate;
         this.questionTextAreaRows = this.CalculateQuestionTextAreaRowsCount(this.Question.Length);
         this.Answer = null;
         this.hints = null;
-        this.isRight = null;
 
         await InvokeAsync(this.StateHasChanged);
     }
