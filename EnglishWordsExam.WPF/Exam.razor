@@ -7,55 +7,59 @@
     }
     else
     {
-        <div class="row">
-            <div class="col p-5">
-                @if (examResult.Length > 0)
+        <div class="d-flex flex-column w-75 p-5">
+            @if (examResult.Length > 0)
+            {
+                <div id="exam-result-message">
+                    <span class="text-info fw-bold">@(examResult)</span>
+                </div>
+                @if (examResult.Equals(CompletedExamMessage))
                 {
-                    <div id="exam-result-message">
-                        <span class="text-info fw-bold">@(examResult)</span>
+                    <button class="btn btn-primary mt-2"
+                            @onclick="() => { inProgress = false; examResult = string.Empty; }">
+                        Start new Exam
+                    </button>
+                }
+            }
+
+            @if (!examResult.Equals(CompletedExamMessage))
+            {
+                @if (examTitle.Length > 0)
+                {
+                    <div id="exam-title-message">
+                        <span class="text-info fw-bold">@(examTitle)</span>
                     </div>
-                    @if (examResult.Equals(CompletedExamMessage))
-                    {
-                        <button class="btn btn-primary mt-2"
-                                @onclick="() => { inProgress = false; examResult = string.Empty; }">
-                            Start new Exam
-                        </button>
-                    }
                 }
+                <section>
+                    <div class="mt-3">
+                        <label for="questionArea" class="form-label">
+                            <span class="text-info">Question</span> @(questionNumber) of @(wordsToTranslate):
+                        </label>
+                        <textarea type="text" @bind="Question" @bind:event="onset" class="form-control" id="questionArea" rows="@(questionTextAreaRows)" />
+                    </div>
 
-                @if (!examResult.Equals(CompletedExamMessage))
-                {
-                    @if (examTitle.Length > 0)
-                    {
-                        <div id="exam-title-message">
-                            <span class="text-info fw-bold">@(examTitle)</span>
-                        </div>
-                    }
-                    <section>
-                        <div class="mt-3">
-                            <label for="questionArea" class="form-label">Question @(questionNumber) of @(wordsToTranslate):</label>
-                            <textarea type="text" @bind="Question" @bind:event="onset" class="form-control" id="questionArea" rows="@(questionTextAreaRows)" />
-                        </div>
+                    <div class="mt-3">
+                        <label for="answerArea" class="form-label">Answer:</label>
+                        <input type="text" @bind="Answer" @bind:event="onchange" class="form-control" id="answerArea" />
+                    </div>
 
-                        <div class="mt-3">
-                            <label for="answerArea" class="form-label">Answer:</label>
-                            <input type="text" @bind="Answer" @bind:event="onchange" class="form-control" id="answerArea" />
-                        </div>
+                    <div class="mt-2">
+                        <Hints HintsTokens="@hints" HintsNeeded="HintsNeededHandler" />
+                    </div>
 
-                        <div class="mt-2">
-                            <Hints HintsTokens="@hints" HintsNeeded="HintsNeededHandler" />
-                        </div>
+                </section>
+            }
 
-                    </section>
-                }
-            </div>
+            @if (isRight.HasValue)
+            {
+                string text = isRight.Value ? "right" : "wrong";
+                string style = isRight.Value ? "success" : "danger";
 
-            <div class="col p-5">
-                @if (isRight.HasValue)
-                {
-                    string text = isRight.Value ? "right" : "wrong";
-                    string style = isRight.Value ? "success" : "danger";
-                    <span class="text-bg-@style">The translation for question @(questionNumber - 1) is @text!</span>
+                <div class="mt-3">
+                    <span>
+                        The translation for question @(questionNumber - 1) is
+                        <span class="text-bg-@style">@text!</span>
+                    </span>
 
                     <div class="d-flex flex-column mt-2">
                         <TranslationResult Word="@WordForTranslation"
@@ -63,8 +67,9 @@
                                            Translations="@AllTranslations"
                                            TranslationType="@translationType" />
                     </div>
-                }
-            </div>
+                </div>
+
+            }
         </div>
     }
 </div>
